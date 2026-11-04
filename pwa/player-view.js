@@ -70,6 +70,9 @@ export function createPlayerView({ screen, video, isActive = () => true, toggleP
     full = true; controls = false; gesture = null; interacting = false; selectionOpen = false; const request = ++generation; paint();
     if (history) win.history.pushState({...win.history.state, view:'player', playerFullscreen:true}, '', '#lernen');
     if (native()) { native().setFullscreen(true); return; }
+    // Android browser fullscreen hides OS navigation. Keep the app-only layout
+    // there; native Android controls its system bars through the platform bridge.
+    if (/Android/i.test(win.navigator.userAgent)) return;
     try {
       if (!screen.requestFullscreen) throw new Error('Fullscreen unavailable');
       await screen.requestFullscreen();
@@ -115,9 +118,9 @@ export function createPlayerView({ screen, video, isActive = () => true, toggleP
   doc.addEventListener('fullscreenchange', () => { if (full && !native() && doc.fullscreenElement !== screen) void exit(); });
   return {
     mediaChanged: clearActions,
-    get full() { return full; }, enter, exit,
+    get full() { return full; }, get controlsVisible() { return full && controls; }, enter, exit,
     toggle() { return full ? exit() : enter(); },
-    back() { if (!full) return false; void exit(); return true; },
+    back() { if (!full) return false; if (controls) hide(); else void exit(); return true; },
     reset() { clearActions(); gesture = null; interacting = false; selectionOpen = false; full = false; controls = false; clearTimeout(hideTimer); generation++; clearTimeout(hintTimer); hint.hidden = true; paint(); native()?.setFullscreen(false); }
   };
 }
