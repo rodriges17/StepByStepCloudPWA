@@ -27,13 +27,15 @@ test('denied browser fullscreen keeps custom controls, tap playback and Back nav
  await page.locator('#speed').selectOption('0.5');await page.locator('#learningVideo').evaluate(v=>v.currentTime=.3);
  await page.locator('#fullscreen').click();await expect(page.locator('#playerScreen')).toHaveClass(/is-immersive/);
  await expect(page.locator('#playerScreen .screen-header')).toHaveJSProperty('inert',true);
- await expect(page.getByRole('status').filter({hasText:'Browserleisten'})).toBeVisible();
+ if(!/Android/i.test(await page.evaluate(()=>navigator.userAgent)))await expect(page.getByRole('status').filter({hasText:'Browserleisten'})).toBeVisible();
  const stage=await page.locator('#videoStage').boundingBox();await swipe(page);
  await expect(page.locator('#playerScreen .screen-header')).toHaveJSProperty('inert',false);
  expect(await page.locator('#videoStage').boundingBox()).toEqual(stage);
  await page.screenshot({path:test.info().outputPath('fullscreen-controls.png')});
  await expect(page.locator('#playerVideoChoice')).toBeVisible();await expect(page.locator('#playerDescription')).toBeHidden();
  await page.locator('#playerVideoChoice').selectOption('1');await expect(page.locator('#playerTitle')).toHaveText('Video 2');
+ await page.keyboard.press('Escape');await expect(page.locator('#playerScreen')).toHaveClass(/is-immersive/);
+ await expect(page.locator('#playerScreen .player-bottom')).toHaveJSProperty('inert',true);
  await page.keyboard.press('Escape');await expect(page.locator('#playerScreen')).not.toHaveClass(/is-immersive/);
  await expect(page.locator('#playerScreen')).toBeVisible();await expect(page.locator('#speed')).toHaveValue('0.5');
  await page.locator('#playerBack').click();await expect(page.locator('#playerScreen')).toBeHidden();
@@ -75,6 +77,7 @@ test('double taps seek within A–B and accumulate feedback while paused play ca
  await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',true);
  await page.mouse.dblclick(b.x+b.width*.85,y,{delay:80});await expect(page.locator('.player-seek-feedback')).toHaveText('▶▶ 10 s');
  await page.mouse.dblclick(b.x+b.width*.15,y,{delay:80});await expect(page.locator('#learningVideo')).toHaveJSProperty('currentTime',1);
+ await expect(page.locator('#learningVideo')).toHaveJSProperty('seeking',false);
  await page.mouse.click(b.x+b.width*.15,y);await page.clock.fastForward(350);await expect(page.getByRole('button',{name:'Video starten',exact:true})).toBeHidden();
  await page.mouse.click(b.x+b.width*.15,y);await page.clock.fastForward(350);await expect(page.getByRole('button',{name:'Video starten',exact:true})).toBeVisible();
 });
@@ -101,4 +104,20 @@ test('fullscreen menu keeps browser safe area clear through rotation without mov
  await page.locator('#learningVideo').evaluate(v=>v.dispatchEvent(new Event('error')));
  await expect(page.getByRole('button',{name:'Video starten',exact:true})).toBeHidden();
  await expect(page.getByRole('button',{name:'Erneut versuchen',exact:true})).toBeVisible();
+});
+
+ test('Android PWA Back hides menu, exits fullscreen, then closes figure without showing the footer early',async({page,browserName})=>{
+ test.skip(browserName!=='chromium','Android PWA fullscreen strategy');
+ await openPlayer(page);
+ await expect(page.locator('#playerScreen .bottom-nav')).toBeHidden();
+ await page.locator('#fullscreen').click();
+ expect(await page.evaluate(()=>document.fullscreenElement)).toBeNull();
+ await expect(page.locator('#playerScreen .player-bottom')).toHaveJSProperty('inert',true);
+ await page.keyboard.press('ArrowUp');await page.goBack();
+ await expect(page.locator('#playerScreen')).toHaveClass(/is-immersive/);
+ await expect(page.locator('#playerScreen .player-bottom')).toHaveJSProperty('inert',true);
+ await page.goBack();await expect(page.locator('#playerScreen')).not.toHaveClass(/is-immersive/);
+ await expect(page.locator('#playerScreen .bottom-nav')).toBeHidden();
+ await page.goBack();await expect(page.locator('#playerScreen')).toBeHidden();
+ await expect(page.locator('body > .bottom-nav')).toBeVisible();
 });

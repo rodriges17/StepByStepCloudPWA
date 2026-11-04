@@ -344,7 +344,12 @@ function cleanupPreview() { previewVideo.pause(); previewVideo.removeAttribute('
 window.addEventListener('popstate', async event => {
   const target = event.state?.view ?? 'home';
   if (learning && target === 'player') {
-    if (!event.state?.playerFullscreen) void playerView.exit({history:false});
+    if (!event.state?.playerFullscreen && playerView.controlsVisible) {
+      playerView.back();
+      // Browser Back consumed the fullscreen entry: retain it while just hiding
+      // the menu, so the next Back exits fullscreen before closing the figure.
+      history.pushState({...event.state, view:'player', playerFullscreen:true}, '', '#lernen');
+    } else if (!event.state?.playerFullscreen) void playerView.exit({history:false});
     else if (!playerView.full) void playerView.enter({history:false});
     route = 'player'; return;
   }

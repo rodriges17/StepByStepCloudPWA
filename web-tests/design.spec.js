@@ -66,7 +66,9 @@ test.describe('primary navigation and cloud layouts', () => {
     for (const theme of ['dark', 'light']) { await page.evaluate(theme => window.stepAppearance.set(theme), theme); await page.screenshot({ path: info.outputPath(`${theme}-lernen.png`) });
       if (theme === 'light') await expect(page.locator('#playerTitle')).toHaveCSS('color', 'rgb(255, 245, 237)');
       expect(await page.locator('.player-controls').evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true); }
-    await page.locator('#playerScreen [data-nav=cloud]').tap(); await expect(page.locator('#cloudDialog')).toBeVisible(); await expect(page.locator('#playerScreen')).not.toBeVisible();
+    await expect(page.locator('#playerScreen .bottom-nav')).toBeHidden();
+    await page.locator('#playerBack').tap(); await expect(page.locator('#playerScreen')).not.toBeVisible();
+    await expect(nav).toBeVisible(); await nav.locator('[data-nav=cloud]').tap(); await expect(page.locator('#cloudDialog')).toBeVisible();
     await expect(page.locator('#learningVideo')).not.toHaveAttribute('src');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });

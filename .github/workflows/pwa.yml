@@ -27,12 +27,8 @@ jobs:
         with:
           deno-version: v2.x
       - run: deno check --node-modules-dir=manual supabase/functions/cloud/index.ts
-      - name: Create local synthetic test videos once for all shards
-        run: |
-          command -v ffmpeg >/dev/null || (sudo apt-get update && sudo apt-get install -y ffmpeg)
-          mkdir -p web-tests/fixtures
-          ffmpeg -f lavfi -i testsrc2=size=320x180:rate=12 -t 6 -c:v libx264 -pix_fmt yuv420p -movflags +faststart web-tests/fixtures/clip.mp4
-          ffmpeg -f lavfi -i testsrc2=size=180x320:rate=12 -t 5 -c:v libx264 -pix_fmt yuv420p -movflags +faststart web-tests/fixtures/portrait.mp4
+      - name: Verify checked-in synthetic test videos
+        run: test -s web-tests/fixtures/clip.mp4 && test -s web-tests/fixtures/portrait.mp4
       - uses: actions/upload-artifact@v4
         with:
           name: pwa-test-videos
