@@ -77,6 +77,7 @@ test('double taps seek within A–B and accumulate feedback while paused play ca
  await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',true);
  await page.mouse.dblclick(b.x+b.width*.85,y,{delay:80});await expect(page.locator('.player-seek-feedback')).toHaveText('▶▶ 10 s');
  await page.mouse.dblclick(b.x+b.width*.15,y,{delay:80});await expect(page.locator('#learningVideo')).toHaveJSProperty('currentTime',1);
+ await expect(page.locator('#learningVideo')).toHaveJSProperty('seeking',false);
  await page.mouse.click(b.x+b.width*.15,y);await page.clock.fastForward(350);await expect(page.getByRole('button',{name:'Video starten',exact:true})).toBeHidden();
  await page.mouse.click(b.x+b.width*.15,y);await page.clock.fastForward(350);await expect(page.getByRole('button',{name:'Video starten',exact:true})).toBeVisible();
 });
