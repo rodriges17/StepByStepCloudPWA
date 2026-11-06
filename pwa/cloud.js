@@ -18,6 +18,8 @@ import { readCloudCache, writeCloudCache, cloudCacheRevision } from './cloud-cac
 import { cloudLocalIndex as localIndex } from './cloud-local.js';
 import { createPosterView, posterPayload } from './cloud-posters.js';
 const node = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n; };
+const libraryNames = new Intl.Collator('de', { numeric: true, sensitivity: 'base' });
+const sortedLibraries = () => [...state.libraries].sort((a, b) => libraryNames.compare(a.title, b.title) || String(a.id).localeCompare(String(b.id)));
 const MB = value => `${(Number(value ?? 0) / 1000000).toFixed(1)} MB`;
 const action = (label, work) => {
   const button = node('button', label, 'secondary'); button.type = 'button';
@@ -72,6 +74,7 @@ async function leaveLibraryDraft(active = navigation.capture()){
 }
 
 let loginDialog, loginTrigger, cloudNavigation, accountDialog, accountTrigger;
+let listHeader;
 let dialog, body, errorBox, statusBox, hooks, state, current, busy = false, source = null, area = 'figures';
 function report(error, target = errorBox) { target.textContent = error?.message ?? 'Cloud-Aufruf fehlgeschlagen.'; target.hidden = false; target.scrollIntoView({ block: 'nearest' }); }
 function field(form, label, value = '', type = 'text') {
@@ -99,7 +102,7 @@ function libraryCard(library, parent = body) {
 }
 function setCloudBusy(value) {
   busy = value; statusBox.closest('footer').setAttribute('aria-busy', String(value));
-  body.inert = value; if (loginDialog) loginDialog.inert = value; if (accountDialog) accountDialog.inert = value;
+  body.inert = value; listHeader.inert = value; if (loginDialog) loginDialog.inert = value; if (accountDialog) accountDialog.inert = value;
   document.getElementById('cloudBack').disabled = value;
   dialog.querySelectorAll('[data-nav], #cloudNavigation button, .cloud-refresh-trigger, #cloudAccountOpen, #cloudSettings').forEach(button => { button.disabled = value; });
 }
@@ -132,7 +135,7 @@ function resetCloudSession() {
   document.querySelectorAll('.cloud-library-picker').forEach(picker => { picker.close(); picker.remove(); });
   peopleView.reset(); resetOwnFigures(); savedLibraryFigure = null; renderedView = null; state = null; displayedOwner = null;
   localInventoryEpoch++; localFigures = []; localUpdates = [];
-  disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren();
+  disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren(); listHeader.replaceChildren(); listHeader.hidden = true;
   cloudNavigation.replaceChildren(); cloudNavigation.hidden = true; errorBox.hidden = true; cacheStatus('');
   if (loginTrigger) loginTrigger.hidden = signedIn();
   dismissLogin(); dismissAccount(); accountTrigger.hidden = true; accountDialog.replaceChildren();
@@ -265,7 +268,7 @@ async function load(library = current, allowCache = false) {
     }
     cacheStatus(cached ? 'Änderungen werden geladen …' : 'Cloud-Inhalte werden geladen …');
     const { snapshot, detail: freshDetail } = await cloudReadState.refresh(owner, library, { available, force: allowCache === 'refresh', onAccessChanged: () => {
-      if (active()) { clearLibrarySession(); disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren(); renderedView = null; state = null; displayedOwner = null; cached = null; cloudNavigation.replaceChildren(); cloudNavigation.hidden = true; renderAccount(); }
+      if (active()) { clearLibrarySession(); disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren(); listHeader.replaceChildren(); listHeader.hidden = true; renderedView = null; state = null; displayedOwner = null; cached = null; cloudNavigation.replaceChildren(); cloudNavigation.hidden = true; renderAccount(); }
     } });
     if (!active()) return;
     // Do not interrupt a form, an active download, expanded history or a video preview.
@@ -283,7 +286,7 @@ async function load(library = current, allowCache = false) {
     if (epoch !== navigation.revision || !dialog.open || owner && owner !== cloudIdentity()) return;
     if (error.cacheCleared && owner) {
       if (epoch !== navigation.revision || !dialog.open || owner !== cloudIdentity()) return;
-      clearLibrarySession(); disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren(); state = null; displayedOwner = null; cached = null; cloudNavigation.replaceChildren(); cloudNavigation.hidden = true; renderAccount();
+      clearLibrarySession(); disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren(); listHeader.replaceChildren(); listHeader.hidden = true; state = null; displayedOwner = null; cached = null; cloudNavigation.replaceChildren(); cloudNavigation.hidden = true; renderAccount();
     }
     if (cached) cacheStatus(`Aktualisierung nicht möglich – letzter geladener Stand wird angezeigt. ${lastStand(cached.updatedAt)}`);
     else { cacheStatus(''); report(error); if (!body.childElementCount) body.append(action('Erneut versuchen', () => load(library, true))); }
@@ -296,7 +299,7 @@ async function renderCloud(library, detail) {
   if (area === 'initial' || area === 'figures' && !source && !hasOwnArea(state)) area = initialArea(state);
   renderedView = { owner: cloudIdentity(), area, library };
   if (!state.me && !['figures', 'libraries'].includes(area)) area = 'libraries';
-  disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren(); body.parentElement.scrollTop = 0;
+  disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren(); listHeader.replaceChildren(); listHeader.hidden = true; body.parentElement.scrollTop = 0;
   posterView = createPosterView(body, state.me);
   loginTrigger.hidden = !!state.me; if (state.me) dismissLogin();
   const toolbar = node('div', undefined, 'cloud-tabs');
@@ -329,7 +332,7 @@ async function renderCloud(library, detail) {
     const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('fill', 'none'); icon.setAttribute('stroke', 'currentColor'); icon.setAttribute('stroke-width', '1.7'); icon.setAttribute('stroke-linecap', 'round'); icon.setAttribute('aria-hidden', 'true');
     icon.innerHTML = '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>'; info.append(icon);
-    heading.append(node('h3', 'Meine Figuren'), info); body.append(heading, explanation);
+    heading.append(node('h3', 'Meine Figuren'), info); listHeader.append(heading, explanation); listHeader.hidden = false;
     ownFigures(); return;
   }
   if (area === 'admin' && state.me?.is_admin) { adminForm(); return; }
@@ -338,8 +341,8 @@ async function renderCloud(library, detail) {
     const create = action('', () => navigate('create')); create.className = 'primary add-trigger'; create.setAttribute('aria-label', 'Bibliothek erstellen'); create.title = 'Bibliothek erstellen';
     const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); icon.setAttribute('viewBox', '0 0 24 24'); icon.setAttribute('fill', 'none'); icon.setAttribute('stroke', 'currentColor'); icon.setAttribute('stroke-width', '1.7'); icon.setAttribute('stroke-linecap', 'round'); icon.setAttribute('aria-hidden', 'true'); icon.innerHTML = '<path d="M12 5v14M5 12h14"/>'; create.append(icon); librariesHeading.append(create);
   }
-  body.append(librariesHeading);
-  for (const lib of state.libraries) {
+  listHeader.append(librariesHeading); listHeader.hidden = false;
+  for (const lib of sortedLibraries()) {
     const box = libraryCard(lib); if (lib.owner_id === state.me?.id) box.append(node('p', 'Besitzer · Bibliothek verwalten', 'cloud-role-badge')); else if (lib.manage) box.append(node('p', 'Plattform-Administrator · Bibliothek verwalten', 'cloud-role-badge')); else if (lib.contribute) box.append(node('p', 'Mitwirkender', 'cloud-role-badge')); else box.append(node('p', 'Lesen', 'cloud-role-badge')); box.append(node('p', `${lib.visibility === 'public' ? 'Öffentlich' : 'Privat'} · ${lib.collaborative ? 'Mitwirkende erlaubt' : 'Nur Besitzer'} · ${lib.moderated ? 'Mit Freigabe' : 'Sofort veröffentlichen'}`));
   }
   if (!state.libraries.length) body.append(node('p', 'Noch keine zugänglichen Bibliotheken.'));
@@ -653,7 +656,7 @@ function downloadControls(box, rev, { own = false, revisionIds = [rev.id] } = {}
 async function attachForm(revision) {
   if (!await leaveLibraryDraft()) return;
   navigation.invalidateView(); renderedView = null;
-  disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren();
+  disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren(); listHeader.replaceChildren(); listHeader.hidden = true;
   body.append(action('Zurück zu Meine Cloud-Figuren', () => navigate('figures')));
   const box = section(`„${revision.title}“ zuordnen`);
   box.append(node('p', versionLabel(revision)));
@@ -913,10 +916,10 @@ function publicLibraries() {
   const heading = node('div', undefined, 'cloud-public-heading');
   heading.append(node('h3', 'Öffentliche Bibliotheken'));
   intro.append(heading, node('p', 'Entdecke Figuren und übernimm sie zum Üben auf dein Gerät. Öffentliche Bibliotheken sind ohne Anmeldung lesbar.'));
-  body.append(intro);
+  listHeader.append(intro); listHeader.hidden = false;
   const catalog = node('div', undefined, 'cloud-public-libraries');
   body.append(catalog);
-  for (const library of state.libraries.filter(library => library.visibility === 'public')) {
+  for (const library of sortedLibraries().filter(library => library.visibility === 'public')) {
     const card = libraryCard(library, catalog);
     card.append(node('p', 'Öffentlich', 'cloud-public-badge'));
     if (library.description) card.append(node('p', library.description));
@@ -1069,6 +1072,7 @@ export function initCloud(callbacks) {
   peopleView = createPeopleView({ node, action, field, select, checkbox, call: cloudCall, run, confirm: options => confirmCloud(options), state: () => state, refresh: () => load(null), report, section, extraManagement, account: () => { renderAccount(); accountDialog.showModal(); accountTrigger.setAttribute('aria-expanded', 'true'); } });
   dialog = document.getElementById('cloudDialog'); body = document.getElementById('cloudBody'); errorBox = document.getElementById('cloudError'); statusBox = document.getElementById('cloudStatus');
   const downloadProgress = node('progress'); downloadProgress.id = 'cloudDownloadProgress'; downloadProgress.setAttribute('aria-label', 'Bibliothek lokal verfügbar machen'); downloadProgress.hidden = true; statusBox.after(downloadProgress);
+  listHeader = node('div', undefined, 'cloud-list-header'); listHeader.id = 'cloudListHeader'; listHeader.hidden = true; body.parentElement.before(listHeader);
   cloudNavigation = node('div', undefined, 'cloud-navigation'); cloudNavigation.id = 'cloudNavigation'; cloudNavigation.hidden = true; dialog.querySelector('.screen-header').after(cloudNavigation);
   const settingsTrigger = document.getElementById('infoButton').cloneNode(true); settingsTrigger.id = 'cloudSettings'; settingsTrigger.onclick = () => navigation.settings(); settingsTrigger.replaceChildren(uiIcon('settings')); dialog.querySelector('.cloud-brand-header').append(settingsTrigger);
   document.getElementById('infoButton').replaceChildren(uiIcon('settings'));
@@ -1098,7 +1102,7 @@ export function initCloud(callbacks) {
 }
 async function enterCloud(local, library) {
   source = local; current = library; area = 'initial';
-  errorBox.hidden = true; if (displayedOwner !== cloudIdentity()) { cloudNavigation.replaceChildren(); cloudNavigation.hidden = true; } if (displayedOwner !== cloudIdentity() || local) { disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren(); }
+  errorBox.hidden = true; if (displayedOwner !== cloudIdentity()) { cloudNavigation.replaceChildren(); cloudNavigation.hidden = true; } if (displayedOwner !== cloudIdentity() || local) { disposeUploadTags(); cancelThumbnails(); clearPreviews(body); body.replaceChildren(); listHeader.replaceChildren(); listHeader.hidden = true; }
   // Do not let dialog focus restoration reopen the search keyboard on return.
   if (document.activeElement?.matches('input, textarea, [contenteditable=true]')) document.activeElement.blur();
   loginTrigger.hidden = signedIn(); accountTrigger.hidden = !state?.me || displayedOwner !== cloudIdentity();

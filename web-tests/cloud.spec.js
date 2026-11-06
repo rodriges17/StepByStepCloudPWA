@@ -20,7 +20,7 @@ async function mock(page,admin=false, own=false, contribute=true, options={}){
   if(req.url().includes('/storage/'))return route.fulfill({status:200,contentType:'video/mp4',body:clip,headers:{'Access-Control-Allow-Origin':'*'}});
   if(req.method()==='OPTIONS')return route.fulfill({status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, apikey, content-type','Access-Control-Allow-Methods':'POST, GET, OPTIONS'}});
   const {action,payload}=req.postDataJSON();calls.push({action,payload,authorization:req.headers().authorization});let result={ok:true};
-  if(action==='state')result={me:options.me!==undefined?options.me:admin&&req.headers().authorization?{id:'admin',email:'admin@example.test',is_admin:true,upload_enabled:true,used:0,quota:500000000}:null,settings:{used:0,total_limit:900000000},people:options.people??[],libraries:options.noLibraries?[]:[{...library,manage:options.manage??false,owner_id:options.owner??library.owner_id,collaborative:options.collaborative??library.collaborative,contribute,visibility:options.visibility??library.visibility}],own_figures:Array.isArray(own)?own:own?[{id:'figure-1',public_allowed:options.publicAllowed??true,revisions:[{...rev,created_at:'2026-10-19T00:00:00Z'}]}]:[]};
+  if(action==='state')result={me:options.me!==undefined?options.me:admin&&req.headers().authorization?{id:'admin',email:'admin@example.test',is_admin:true,upload_enabled:true,used:0,quota:500000000}:null,settings:{used:0,total_limit:900000000},people:options.people??[],libraries:options.libraries??(options.noLibraries?[]:[{...library,manage:options.manage??false,owner_id:options.owner??library.owner_id,collaborative:options.collaborative??library.collaborative,contribute,visibility:options.visibility??library.visibility}]),own_figures:Array.isArray(own)?own:own?[{id:'figure-1',public_allowed:options.publicAllowed??true,revisions:[{...rev,created_at:'2026-10-19T00:00:00Z'}]}]:[]};
   if(action==='state') for(const f of result.own_figures) f.owner_id ??= 'admin';
   if(action==='duplicates') result={matches:options.duplicate?[{figure:'existing-figure',revision:'existing-revision',title:'Vorhandene Figur',media:'existing-video',hash:payload.hashes[0]}]:[]};
   if(action==='editor') result={editors:[]};
@@ -89,7 +89,7 @@ test('manual sign-in link is redeemed inside the current app without navigating 
  await expect(page.locator('#cloudBody')).not.toContainText('iPhone-App');
  await expect(page.locator('#cloudBody input')).toHaveCount(0);
  await expect(page.locator('.cloud-tabs')).toHaveCount(0);
- await expect(page.locator('#cloudBody')).toContainText('Öffentliche Bibliotheken sind ohne Anmeldung lesbar.');
+ await expect(page.locator('#cloudListHeader')).toContainText('Öffentliche Bibliotheken sind ohne Anmeldung lesbar.');
  await page.locator('#cloudLoginOpen').tap();
  await page.getByLabel('Anmeldelink einfügen',{exact:true}).fill('https://rodriges17.github.io/StepByStepCloudPWA/?cloud=1&type=magiclink&token_hash=test-once');
  await page.getByRole('button',{name:'Anmelden',exact:true}).tap();
@@ -861,4 +861,29 @@ test('opening a personal link preserves the current account until confirmation a
  await expect(page.locator('#cloudError')).toContainText('Einmallink ist verbraucht');
  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('salsa-cloud-session:/pwa/:v1')).access_token)).toBe('test-user-jwt');
  expect(calls.some(c=>c.authorization==='Bearer candidate-jwt')).toBe(false);
+});
+
+for(const view of ['public libraries','libraries','figures'])test(`cloud ${view} keeps its title fixed while cards scroll`,async({page})=>{
+ const member=view!=='public libraries';
+ if(member)await signIn(page);
+ const libraries=Array.from({length:25},(_,i)=>({...library,id:'lib-'+i,title:`Kurs ${25-i}`}));
+ const figures=Array.from({length:25},(_,i)=>({id:'figure-'+i,owner_id:'admin',revisions:[{id:'rev-'+i,title:`Figur ${i}`,description:'Beschreibung',tags:[],videos:[]}]}));
+ await mock(page,member,figures,true,{libraries});await start(page);await page.locator('#cloudButton').tap();
+ if(view==='libraries')await page.getByRole('button',{name:'Bibliotheken',exact:true}).tap();
+ const header=page.locator('#cloudListHeader'),scroller=page.locator('.cloud-scroll');
+ await expect(header).toBeVisible();
+ if(view==='figures')await header.getByRole('button',{name:'Informationen zu Meine Figuren'}).tap();
+ else await expect(page.locator('.cloud-library-card h3')).toHaveText(Array.from({length:25},(_,i)=>`Kurs ${i+1}`));
+ const before=await header.boundingBox(),bodyBefore=await page.locator('#cloudBody').boundingBox();
+ await scroller.evaluate(el=>el.scrollTop=500);
+ expect(await scroller.evaluate(el=>el.scrollTop)).toBeGreaterThan(100);
+ expect((await header.boundingBox()).y).toBe(before.y);
+ expect((await page.locator('#cloudBody').boundingBox()).y).toBeLessThan(bodyBefore.y-100);
+ if(view==='figures')await expect(page.locator('#cloudFiguresExplanation')).toBeInViewport();
+ if(view==='libraries'){
+  await header.getByRole('button',{name:'Bibliothek erstellen'}).tap();
+  await expect(header).toBeHidden();
+  await page.getByRole('button',{name:'Abbrechen',exact:true}).tap();
+  await expect(header).toBeVisible();
+ }
 });
