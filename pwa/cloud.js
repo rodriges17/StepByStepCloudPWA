@@ -363,7 +363,7 @@ function libraryForm(){
 function libraryShare(id, lib) {
   const box = section('Bibliothek teilen'); box.classList.add('cloud-library-share');
   box.append(node('p', lib.visibility === 'public' ? 'Dieser Link ist ohne Anmeldung lesbar.' : 'Zum Öffnen sind Anmeldung und Bibliotheksberechtigung erforderlich.'));
-  const share = new URL('https://rodriges17.github.io/SalsaAppCloud/'); share.searchParams.set('library', id);
+  const share = new URL('https://rodriges17.github.io/StepByStepCloudPWA/'); share.searchParams.set('library', id);
   const row = node('div', undefined, 'cloud-library-link'); const link = field(row, 'Bibliothekslink', share.href); link.readOnly = true;
   row.append(action('Link kopieren', async () => {
     try { await navigator.clipboard.writeText(link.value); }
