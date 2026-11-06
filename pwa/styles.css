@@ -596,3 +596,8 @@ button.cloud-local-open,
 
 /* A figure owns the screen until it closes, including its normal player view. */
 body.playing-screen .bottom-nav{display:none}
+
+/* Cloud overview headings stay above the existing card scroller. */
+.cloud-list-header{flex-shrink:0;display:grid;gap:8px;padding:16px max(16px,calc((100% - 720px)/2)) 0;background:var(--bg)}
+.cloud-list-header .cloud-public-intro{display:grid;gap:8px}
+@media(min-width:760px){.cloud-list-header{padding-inline:max(20px,calc((100% - 680px)/2))}}
