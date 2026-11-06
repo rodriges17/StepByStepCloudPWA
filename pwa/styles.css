@@ -604,3 +604,6 @@ body.playing-screen .bottom-nav{display:none}
 
 /* Keep a visible gap above library cards even after they scroll to the edge. */
 .cloud-list-header:has(.cloud-libraries-heading){padding-bottom:12px}
+
+/* The fixed heading already supplies the gap; do not add another at list start. */
+.cloud-list-header:has(.cloud-libraries-heading):not([hidden]) + .cloud-scroll{padding-top:0}
