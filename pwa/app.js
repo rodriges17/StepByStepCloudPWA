@@ -1,4 +1,5 @@
 import { createPlayerView } from './player-view.js';
+import { createPlayerVideoPicker } from './player-video-picker.js';
 import { createFigureEditSession } from './figure-edit-session.js';
 import { connectTagSuggestions } from './tag-suggestions.js';
 import { mountTagPicker } from './tag-picker.js';
@@ -28,6 +29,7 @@ const loop = new ABLoop();
 let playIntent = false, wakeLock = null;
 const video = $('learningVideo');
 const playerView = createPlayerView({screen:$('playerScreen'),video,isActive:()=>!!learning,togglePlayback:()=>{if(video.paused)play();else pause();},seekBy:seconds=>{const low=loop.b!==null?loop.a:0,high=loop.b!==null?loop.b:video.duration;if(Number.isFinite(high))video.currentTime=Math.max(low,Math.min(high,video.currentTime+seconds));}});
+const playerPicker = createPlayerVideoPicker({screen:$('playerScreen'),onSelect:index=>{if(learning)loadPlayerVideo(index,!video.paused);},onOpenChange:open=>playerView.selectionChanged(open)});
 if ('ResizeObserver' in window) {
   for (const [selector, variable] of [['.overview > .heading', '--brand-header-height'], ['.page-intro', '--overview-intro-height'], ['.overview-filters', '--overview-filters-height']]) {
     const row = document.querySelector(selector); if (!row) continue;
@@ -342,6 +344,7 @@ function releaseURL(url) { if (url) setTimeout(() => URL.revokeObjectURL(url), 1
 function cleanupPreview() { previewVideo.pause(); previewVideo.removeAttribute('src'); previewVideo.load(); releaseURL(previewURL); previewURL = null; $('preview').close(); preview = null; }
 
 window.addEventListener('popstate', async event => {
+  if (playerPicker.handlePopState(event)) return;
   const target = event.state?.view ?? 'home';
   if (learning && target === 'player') {
     if (!event.state?.playerFullscreen && playerView.controlsVisible) {
@@ -385,8 +388,7 @@ async function openPlayer(figure) {
     const records = await figureMedia(figure, { verifyAccess: true });
     learning = { figure, records, index: 0, crop: false, landscape: false, speed: 1 };
     loop.clear(); $('playerTitle').textContent = figure.title; $('playerDescription').textContent = figure.description;
-    $('playerVideoChoice').replaceChildren(); records.forEach((record, index) => { const option = el('option', '', record.name || `Video ${index + 1}`); option.value = String(index); $('playerVideoChoice').append(option); });
-    $('playerVideoChoice').parentElement.hidden = records.length <= 1; $('speed').value = '1'; $('fitCrop').textContent = 'Fit'; $('fitCrop').setAttribute('aria-pressed', 'false'); $('rotatePlayer').setAttribute('aria-pressed', 'false');
+    playerPicker.update(records,0); $('speed').value = '1'; $('fitCrop').textContent = 'Fit'; $('fitCrop').setAttribute('aria-pressed', 'false'); $('rotatePlayer').setAttribute('aria-pressed', 'false');
     $('videoStage').classList.remove('crop'); $('playerScreen').classList.remove('is-landscape'); $('playerScreen').hidden = false; $('overview').hidden = true; $('overview').inert = true; document.body.classList.add('playing-screen');
     pushRoute('player'); loadPlayerVideo(0, false); $('playerBack').focus();
   } catch (error) { toast(storageMessage(error)); } finally { opening = false; }
@@ -397,7 +399,7 @@ async function loadPlayerVideo(index, autoplay) {
   const active = learning, request = ++playerLoad, record = active.records[index];
   playerView.mediaChanged(); playIntent = autoplay; video.pause(); releaseWakeLock();
   if (videoURL) { video.removeAttribute('src'); video.load(); releaseURL(videoURL); }
-  learning.index = index; $('playerTitle').textContent = record.name || active.figure.title; $('playerVideoChoice').value = String(index); loop.clear(); updateLoop(); showPlayerError(null); $('videoLoading').hidden = false;
+  learning.index = index; $('playerTitle').textContent = active.figure.title; playerPicker.update(active.records,index); loop.clear(); updateLoop(); showPlayerError(null); $('videoLoading').hidden = false;
   $('seek').value = '0'; $('position').textContent = '0:00'; $('duration').textContent = timeLabel(learning.records[index].duration);
   $('playPause').textContent = '▶'; $('playPause').setAttribute('aria-label', 'Abspielen');
   try {
@@ -462,10 +464,10 @@ $('markA').onclick = () => { if (learning) { loop.setA(video.currentTime); updat
 $('markB').onclick = () => { if (learning) { loop.setB(video.currentTime); updateLoop(); } };
 $('clearAB').onclick = () => { loop.clear(); updateLoop(); };
 function updateLoop() { $('abStatus').textContent = loop.a === null ? '' : `A ${timeLabel(loop.a)} · B ${loop.b === null ? '–' : timeLabel(loop.b)}`; $('clearAB').disabled = loop.a === null; $('markB').disabled = loop.a === null || video.currentTime <= loop.a + 0.1; }
-$('playerVideoChoice').onchange = () => { if (learning) loadPlayerVideo(Number($('playerVideoChoice').value), !video.paused); };
 $('fullscreen').onclick = () => playerView.toggle();
-$('playerBack').onclick = () => { if (!playerView.back()) history.back(); };
+$('playerBack').onclick = () => { if (!playerPicker.dismiss() && !playerView.back()) history.back(); };
 function closePlayer() {
+  playerPicker.reset();
   playerView.reset();
   window.stepNativePlayer?.reset();
   $('playerScreen').classList.remove('is-native-fullscreen');
@@ -476,7 +478,7 @@ function closePlayer() {
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); previewVideo.pause(); } else overviewLoader.resume(); });
 window.addEventListener('pagehide', () => { pause(); previewVideo.pause(); });
-document.addEventListener('keydown', event => { if (event.key === 'Escape' && learning) { event.preventDefault(); if (!playerView.back()) history.back(); } });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && learning) { event.preventDefault(); if (!playerPicker.dismiss() && !playerView.back()) history.back(); } });
 
 
 let deviceBusy = false, storageChoicePending = false;

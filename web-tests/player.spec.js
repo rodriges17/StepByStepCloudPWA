@@ -1,12 +1,12 @@
 import {test,expect} from '@playwright/test';
 test.use({serviceWorkers:'block'});
-async function openPlayer(page,count=1){
+async function openPlayer(page,count=1,names=null){
  await page.goto('/pwa/');await page.waitForFunction(()=>document.documentElement.dataset.appVersion);
- await page.evaluate(async count=>{
+ await page.evaluate(async ({count,names})=>{
   const storage=await import('/pwa/storage.js'),blob=await(await fetch('/web-tests/fixtures/clip.mp4')).blob();
-  await storage.saveFigure({id:'player-contract',title:'Player',description:'Beschreibung',tags:[],status:'Neu'},Array.from({length:count},(_,i)=>({id:'player-video-'+i,name:'Video '+(i+1),blob,confirmed:true,duration:6,width:320,height:180})));
+  await storage.saveFigure({id:'player-contract',title:'Player',description:'Beschreibung',tags:[],status:'Neu'},Array.from({length:count},(_,i)=>({id:'player-video-'+i,name:names?.[i]??'Video '+(i+1),blob,confirmed:true,duration:6,width:320,height:180})));
   dispatchEvent(new Event('focus'));
- },count);
+ },{count,names});
  await page.locator('[data-figure-id="player-contract"] .card-main').click();
  await page.waitForFunction(()=>{const v=document.querySelector('#learningVideo');return v.readyState>=2&&v.videoWidth>0&&document.querySelector('#videoLoading').hidden;});
 }
@@ -33,7 +33,7 @@ test('denied browser fullscreen keeps custom controls, tap playback and Back nav
  expect(await page.locator('#videoStage').boundingBox()).toEqual(stage);
  await page.screenshot({path:test.info().outputPath('fullscreen-controls.png')});
  await expect(page.locator('#playerVideoChoice')).toBeVisible();await expect(page.locator('#playerDescription')).toBeHidden();
- await page.locator('#playerVideoChoice').selectOption('1');await expect(page.locator('#playerTitle')).toHaveText('Video 2');
+ await page.locator('#playerVideoChoice').click();await page.locator('#playerVideoDialog .player-video-option').nth(1).click();await expect(page.locator('#playerTitle')).toHaveText('Player');await expect(page.locator('#playerVideoChoice')).toContainText('Video 2 von 2');
  await page.keyboard.press('Escape');await expect(page.locator('#playerScreen')).toHaveClass(/is-immersive/);
  await expect(page.locator('#playerScreen .player-bottom')).toHaveJSProperty('inert',true);
  await page.keyboard.press('Escape');await expect(page.locator('#playerScreen')).not.toHaveClass(/is-immersive/);
@@ -97,7 +97,7 @@ test('fullscreen menu keeps browser safe area clear through rotation without mov
  test('changing video cancels delayed taps and loading errors hide the play affordance',async({page})=>{
  await openPlayer(page,2);await page.clock.install();
  const b=await page.locator('#videoStage').boundingBox();await page.mouse.click(b.x+b.width*.15,b.y+b.height*.3);
- await page.locator('#playerVideoChoice').selectOption('1');await page.clock.fastForward(400);
+ await page.locator('#playerVideoChoice').click();await page.locator('#playerVideoDialog .player-video-option').nth(1).click();await page.clock.fastForward(400);
  await expect(page.getByRole('button',{name:'Video starten',exact:true})).toBeVisible();
  await page.mouse.dblclick(b.x+b.width*.15,b.y+b.height*.3,{delay:80});await expect(page.locator('.player-seek-feedback')).toBeVisible();
  await page.locator('#fullscreen').click();await expect(page.locator('.player-seek-feedback')).toBeHidden({timeout:100});
@@ -120,4 +120,50 @@ test('fullscreen menu keeps browser safe area clear through rotation without mov
  await expect(page.locator('#playerScreen .bottom-nav')).toBeHidden();
  await page.goBack();await expect(page.locator('#playerScreen')).toBeHidden();
  await expect(page.locator('body > .bottom-nav')).toBeVisible();
+});
+
+test('header video picker keeps the figure title, a text-adjacent chevron and full names in the sheet',async({page})=>{
+ const long='Rückansicht mit einer sehr ausführlichen Erklärung aller Schritte und Übergänge';
+ await openPlayer(page,2,['Vorne',long]);
+ const trigger=page.locator('#playerVideoChoice');
+ await expect(page.locator('#playerTitle')).toHaveText('Player');
+ await expect(trigger).toContainText('Video 1 von 2');
+ expect((await trigger.boundingBox()).height).toBeGreaterThanOrEqual(44);
+ const text=await page.locator('.player-video-label').boundingBox(),arrow=await page.locator('.player-video-chevron').boundingBox();
+ expect(arrow.x-text.x-text.width).toBeCloseTo(8,0);
+ await trigger.click();
+ await expect(page.getByRole('button',{name:new RegExp(long)})).toBeVisible();
+ await page.locator('#playerVideoDialog .player-video-option').nth(1).click();
+ await expect(page.locator('#playerVideoDialog')).not.toBeVisible();
+ await expect(trigger).toContainText(long);
+ await expect(trigger).toBeFocused();
+ await expect(page.locator('#playerTitle')).toHaveText('Player');
+ const rotate=await page.locator('#rotatePlayer').boundingBox(),chevron=await page.locator('.player-video-chevron').boundingBox();
+ expect(chevron.x+chevron.width).toBeLessThanOrEqual(rotate.x);
+ await trigger.click();await page.goBack();
+ await expect(page.locator('#playerVideoDialog')).not.toBeVisible();
+ await expect(page.locator('#playerScreen')).toBeVisible();
+ await page.locator('#playerBack').click();await expect(page.locator('#playerScreen')).toBeHidden();
+});
+test('a single-video figure has no video selection row',async({page})=>{
+ await openPlayer(page);
+ await expect(page.locator('#playerVideoChoice')).toBeHidden();
+ await expect(page.locator('#playerTitle')).toHaveText('Player');
+});
+test('video selection remains operable while fullscreen controls would normally hide',async({page})=>{
+ await openPlayer(page,2);await page.clock.install();
+ await page.locator('#fullscreen').click();await page.keyboard.press('ArrowUp');
+ await page.locator('#playPause').click();
+ await page.locator('#playerVideoChoice').click();
+ await page.clock.fastForward(5000);
+ await expect(page.locator('#playerVideoDialog')).toBeVisible();
+ await expect(page.locator('#playerScreen .screen-header')).toHaveJSProperty('inert',false);
+ await page.getByRole('button',{name:'Videoauswahl schließen'}).click();
+ await page.locator('#learningVideo').evaluate(v=>{v.pause();});
+ await page.locator('#playPause').click();await page.clock.fastForward(4100);
+ await expect(page.locator('#playerScreen .screen-header')).toHaveJSProperty('inert',true);
+ await expect(page.locator('#playerVideoChoice')).toBeHidden();
+ await expect(page.locator('#playerScreen .player-bottom')).toHaveJSProperty('inert',true);
+ await page.keyboard.press('ArrowUp');
+ await expect(page.locator('#playerVideoChoice')).toBeVisible();
 });

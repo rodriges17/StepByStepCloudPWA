@@ -51,7 +51,7 @@ test('multi-video import, player settings, A–B, rotation, reload and offline p
   await expect(page.locator('#abStatus')).toContainText('B 0:02');
   await page.locator('#clearAB').click(); await expect(page.locator('#abStatus')).toHaveText('');
   await expect(page.locator('#fullLoop')).toHaveCount(0);
-  await page.locator('#playerVideoChoice').selectOption('1');
+  await page.locator('#playerVideoChoice').click();await page.locator('#playerVideoDialog .player-video-option').nth(1).click();
   await expect(page.locator('#learningVideo')).toHaveJSProperty('videoWidth', 180);
   await expect(page.locator('#learningVideo')).toHaveJSProperty('playbackRate', 0.5);
   await expect(page.locator('#fitCrop')).toHaveText('Crop'); await expect(page.locator('#abStatus')).toHaveText('');
