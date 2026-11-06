@@ -3,7 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.118.0';
 const url = Deno.env.get('SUPABASE_URL')!;
 const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}').default;
 const publishable = Deno.env.get('SUPABASE_ANON_KEY') ?? JSON.parse(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS') ?? '{}').default;
-const appURL = 'https://rodriges17.github.io/SalsaAppCloud/';
+const appURL = 'https://rodriges17.github.io/StepByStepCloudPWA/';
 const cors = { 'Access-Control-Allow-Origin': 'https://rodriges17.github.io', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Vary': 'Origin' };
 const root = () => createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
 const checked = (r: { data: any; error: any }): any => { if (r.error) throw Object.assign(new Error(r.error.message), { code: r.error.code, status: r.error.status }); return r.data; };

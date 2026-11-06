@@ -6,13 +6,13 @@
 
 ## Kurzanleitungen
 
-- **[Bibliotheken teilen – Anleitung öffnen](https://rodriges17.github.io/SalsaAppCloud/anleitungen/teilen.html)** · [HTML-Datei](pwa/anleitungen/teilen.html)
-- **[Personen & Zugriff verwalten – Anleitung öffnen](https://rodriges17.github.io/SalsaAppCloud/anleitungen/benutzerverwaltung.html)** · [HTML-Datei](pwa/anleitungen/benutzerverwaltung.html)
+- **[Bibliotheken teilen – Anleitung öffnen](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/teilen.html)** · [HTML-Datei](pwa/anleitungen/teilen.html)
+- **[Personen & Zugriff verwalten – Anleitung öffnen](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/benutzerverwaltung.html)** · [HTML-Datei](pwa/anleitungen/benutzerverwaltung.html)
 
 Die Anleitungen gelten für Cloud-PWA und Android. Beide HTML-Dateien sind eigenständig, mobil lesbar und zum Herunterladen und Drucken geeignet.
 
 
-Eigenständige Cloud-Variante der Salsa-PWA. Zieladresse: https://rodriges17.github.io/SalsaAppCloud/
+Eigenständige Cloud-Variante der Salsa-PWA. Zieladresse: https://rodriges17.github.io/StepByStepCloudPWA/
 
 Die Offline-App unter https://rodriges17.github.io/SalsaAppIOS/ bleibt separat bestehen. Lokale Figuren können per ZIP kopiert werden.
 

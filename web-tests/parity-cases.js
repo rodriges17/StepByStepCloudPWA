@@ -87,10 +87,10 @@ export async function runParityCase(page, { root, fixture, native = false, scena
    if(index===0){await card.focus();await page.keyboard.press('Enter');}else await card.locator('p').first().click();
    const field=page.getByRole('textbox',{name:'Bibliothekslink',exact:true});await field.waitFor();
    const value=await field.inputValue(),link=new URL(value);
-   assert(link.origin==='https://rodriges17.github.io'&&link.pathname==='/SalsaAppCloud/','Library link uses an internal, test or preview address');
+   assert(link.origin==='https://rodriges17.github.io'&&link.pathname==='/StepByStepCloudPWA/','Library link uses an internal, test or preview address');
    assert(link.searchParams.get('library')===libraries[index].id&&[...link.searchParams.keys()].length===1&&!link.hash,'Library link leaks unrelated login data or corrupts the ID');
    assert(!value.includes('must-not-share')&&!value.includes('appassets.androidplatform.net'),'Internal/login data leaked');
-   if(!index)assert(value==='https://rodriges17.github.io/SalsaAppCloud/?library=4a1bc1f6-1623-42d5-bade-f9e625f408b2','Public UUID link differs from canonical address');
+   if(!index)assert(value==='https://rodriges17.github.io/StepByStepCloudPWA/?library=4a1bc1f6-1623-42d5-bade-f9e625f408b2','Public UUID link differs from canonical address');
    const hint=page.getByText('Zum Öffnen sind Anmeldung und Bibliotheksberechtigung erforderlich.',{exact:true});
    assert(await hint.count()===(index?1:0),'Private library permission hint is missing or shown for public library');
    await page.getByRole('button',{name:'Link kopieren',exact:true}).click();await page.waitForFunction(expected=>window.copiedLibraryLink===expected,value);

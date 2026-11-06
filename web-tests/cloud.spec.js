@@ -40,7 +40,7 @@ async function mock(page,admin=false, own=false, contribute=true, options={}){
   if(action==='admin_user'){if(options.failUser)return route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({error:'Keine Berechtigung.',access_changed:true})}); const person={id:'person-'+payload.email,email:payload.email,upload_enabled:payload.enabled,quota:payload.quota,used:0};options.people??=[];const i=options.people.findIndex(p=>p.email===person.email);if(i>=0)options.people[i]={...options.people[i],...person};else options.people.push(person);}
   if(action==='member'&&!options.failMember){options.members??=[];const i=options.members.findIndex(m=>m.email===payload.email);if(payload.role==='remove'){if(i>=0)options.members.splice(i,1);}else{const person=options.people?.find(p=>p.email===payload.email)??{id:payload.email,email:payload.email,upload_enabled:true};if(i>=0)options.members[i]={...options.members[i],role:payload.role};else options.members.push({...person,role:payload.role});}}
   if(action==='member'&&options.failMember){options.failMember=false;return route.fulfill({status:400,contentType:'application/json',body:JSON.stringify({error:'Zuweisung fehlgeschlagen'})});}
-  if(action==='admin_link')result={expires_at:'2026-10-25T22:00:00Z',link:'https://rodriges17.github.io/SalsaAppCloud/?cloud=1&type=magiclink&token_hash=one-time-test'};
+  if(action==='admin_link')result={expires_at:'2026-10-25T22:00:00Z',link:'https://rodriges17.github.io/StepByStepCloudPWA/?cloud=1&type=magiclink&token_hash=one-time-test'};
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result),headers:{'Access-Control-Allow-Origin':'*'}});
  });return calls;
 }
@@ -91,7 +91,7 @@ test('manual sign-in link is redeemed inside the current app without navigating 
  await expect(page.locator('.cloud-tabs')).toHaveCount(0);
  await expect(page.locator('#cloudBody')).toContainText('Öffentliche Bibliotheken sind ohne Anmeldung lesbar.');
  await page.locator('#cloudLoginOpen').tap();
- await page.getByLabel('Anmeldelink einfügen',{exact:true}).fill('https://rodriges17.github.io/SalsaAppCloud/?cloud=1&type=magiclink&token_hash=test-once');
+ await page.getByLabel('Anmeldelink einfügen',{exact:true}).fill('https://rodriges17.github.io/StepByStepCloudPWA/?cloud=1&type=magiclink&token_hash=test-once');
  await page.getByRole('button',{name:'Anmelden',exact:true}).tap();
  await expect(page.locator('#cloudLoginConfirmation')).toContainText('admin@example.test');
  expect(await page.evaluate(()=>localStorage.getItem('salsa-cloud-session:/pwa/:v1'))).toBeNull();
