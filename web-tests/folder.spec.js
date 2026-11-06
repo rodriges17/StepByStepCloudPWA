@@ -162,12 +162,12 @@ test('folder player loads selected media only, ignores late reads and rechecks c
  await page.getByRole('button',{name:'Lazy Ocho lernen',exact:true}).tap();
  await expect(page.locator('#playerScreen')).toBeVisible();
  await page.waitForFunction(()=>window.mediaReads.length===1);
- await page.locator('#playerVideoChoice').selectOption('1');await page.waitForFunction(()=>window.mediaReads.length===2);
+ await page.locator('#playerVideoChoice').click();await page.locator('#playerVideoDialog .player-video-option').nth(1).click();await page.waitForFunction(()=>window.mediaReads.length===2);
  await page.evaluate(()=>window.releaseMedia[1]());await page.waitForFunction(()=>document.querySelector('#learningVideo').readyState>=2);
  const second=await page.locator('#learningVideo').getAttribute('src');
  await page.evaluate(()=>window.releaseMedia[0]());await page.waitForTimeout(100);
  await expect(page.locator('#learningVideo')).toHaveAttribute('src',second);
- await page.locator('#playerVideoChoice').selectOption('0');await page.waitForFunction(()=>document.querySelector('#learningVideo').readyState>=2);
+ await page.locator('#playerVideoChoice').click();await page.locator('#playerVideoDialog .player-video-option').nth(0).click();await page.waitForFunction(()=>document.querySelector('#learningVideo').readyState>=2);
  expect(await page.evaluate(()=>window.mediaReads.length)).toBe(2);
  await page.locator('#playerBack').tap();await expect(page.locator('#playerScreen')).toBeHidden();
  await page.evaluate(async()=>{

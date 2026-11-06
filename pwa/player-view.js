@@ -3,7 +3,7 @@ export function createPlayerView({ screen, video, isActive = () => true, toggleP
   const doc = screen.ownerDocument, win = doc.defaultView;
   const header = screen.querySelector('.screen-header'), bottom = screen.querySelector('.player-bottom');
   let full = false, controls = false, generation = 0, hintTimer, hideTimer;
-  let gesture = null, interacting = false, selectionOpen = false;
+  let gesture = null, interacting = false, selectionOpen = false, pickerOpen = false;
   const stage = video.closest('.video-stage');
   let tapTimer, pendingTap = null, feedbackTimer, pauseTimer, playHidden = false, total = 0, lastSeek = 0, direction = 0;
   const playButton = doc.createElement('button'); playButton.className = 'player-play-feedback'; playButton.type = 'button'; playButton.setAttribute('aria-label','Video starten'); playButton.textContent = '▶';
@@ -38,7 +38,7 @@ export function createPlayerView({ screen, video, isActive = () => true, toggleP
   function scheduleHide() {
     clearTimeout(hideTimer);
     if(full)stage.setAttribute('aria-label',video.paused?'Video abspielen':'Video pausieren');
-    if (full && controls && !video.paused && !video.ended && !interacting && !selectionOpen) hideTimer = setTimeout(hide, 4000);
+    if (full && controls && !video.paused && !video.ended && !interacting && !selectionOpen && !pickerOpen) hideTimer = setTimeout(hide, 4000);
   }
   function reveal() { if (!full) return; controls = true; paint(); scheduleHide(); }
   function hide() { if (!full) return; controls = false; clearTimeout(hideTimer); paint(); }
@@ -110,7 +110,7 @@ export function createPlayerView({ screen, video, isActive = () => true, toggleP
   }
   for (const type of ['pointerup','pointercancel','keyup']) win.addEventListener(type, () => {interacting = false;scheduleHide();});
   doc.addEventListener('keydown', event => {
-    if (!full || !isActive() || event.target.closest?.('input,select,textarea,[contenteditable="true"]')) return;
+    if (!full || !isActive() || pickerOpen || event.target.closest?.('input,select,textarea,[contenteditable="true"]')) return;
     if(event.key==='ArrowUp'){event.preventDefault();reveal();}
     else if(event.key==='ArrowDown'){event.preventDefault();hide();}
     else if((event.key===' '||event.key==='Enter')&&event.target===stage){event.preventDefault();togglePlayback?.();}
@@ -118,9 +118,10 @@ export function createPlayerView({ screen, video, isActive = () => true, toggleP
   doc.addEventListener('fullscreenchange', () => { if (full && !native() && doc.fullscreenElement !== screen) void exit(); });
   return {
     mediaChanged: clearActions,
+    selectionChanged(open) { pickerOpen = open; scheduleHide(); },
     get full() { return full; }, get controlsVisible() { return full && controls; }, enter, exit,
     toggle() { return full ? exit() : enter(); },
     back() { if (!full) return false; if (controls) hide(); else void exit(); return true; },
-    reset() { clearActions(); gesture = null; interacting = false; selectionOpen = false; full = false; controls = false; clearTimeout(hideTimer); generation++; clearTimeout(hintTimer); hint.hidden = true; paint(); native()?.setFullscreen(false); }
+    reset() { clearActions(); gesture = null; interacting = false; selectionOpen = false; pickerOpen = false; full = false; controls = false; clearTimeout(hideTimer); generation++; clearTimeout(hintTimer); hint.hidden = true; paint(); native()?.setFullscreen(false); }
   };
 }
