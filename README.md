@@ -6,7 +6,7 @@
 
 ## Kurzanleitungen
 
-- **[Installation & erste Schritte](docs/INSTALLATION.md)** – App installieren, Figuren entdecken und offline speichern.
+- **[Installation & erste Schritte – Anleitung öffnen](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/installation.html)** · [Markdown-Datei](docs/INSTALLATION.md)
 
 - **[Bibliotheken teilen – Anleitung öffnen](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/teilen.html)** · [HTML-Datei](pwa/anleitungen/teilen.html)
 - **[Personen & Zugriff verwalten – Anleitung öffnen](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/benutzerverwaltung.html)** · [HTML-Datei](pwa/anleitungen/benutzerverwaltung.html)
