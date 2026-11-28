@@ -79,7 +79,10 @@ function placeFigureMenu(menu, anchor) {
   menu.style.left = `${Math.max(margin, Math.min(trigger.right - size.width, window.innerWidth - size.width - margin))}px`;
   menu.style.right = 'auto';
 }
-$('figureScroll').addEventListener('scroll', closeMenus, { passive: true });
+let menuScrollTop;
+$('figureScroll').addEventListener('scroll', event => {
+  if (event.currentTarget.scrollTop !== menuScrollTop) closeMenus();
+}, { passive: true });
 window.addEventListener('resize', () => closeMenus());
 addEventListener('cloud-session-changed', () => closeMenus());
 function closeMenus() { document.querySelectorAll('.card-menu').forEach(n => n.remove()); document.querySelectorAll('.card-options').forEach(n => n.setAttribute('aria-expanded', 'false')); }
@@ -118,6 +121,7 @@ function renderOverview() {
         if (accepted) { try { await deleteFigure(figure); changed(); await refresh(); toast('Figur gelöscht.'); } catch (error) { toast(storageMessage(error)); await refresh(); } }
       }, 'danger'));
       if (figure.storageFolder || folderSupported()) menu.append(button(figure.storageFolder ? 'In App-Speicher übertragen' : 'In Geräteordner übertragen', () => { closeMenus(); moveFigure(figure); }));
+      menuScrollTop = $('figureScroll').scrollTop;
       card.append(menu);
       placeFigureMenu(menu, options);
     }

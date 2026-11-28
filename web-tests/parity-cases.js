@@ -212,13 +212,20 @@ export async function runParityCase(page, { root, fixture, native = false, scena
  }
 
  if(scenario==='menus-and-short-windows'){
-  await seed(12);await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));await page.locator('.card-options').last().click();
+  await seed(12);
+  await page.evaluate(()=>{
+   const scroller=document.getElementById('figureScroll')??document.scrollingElement;
+   scroller.scrollTop=scroller.scrollHeight;
+  });
+  await page.locator('.card-options').last().click();
   const menu=await page.locator('.card-menu').boundingBox(),footer=await page.locator('body>.bottom-nav').boundingBox();
   assert(menu.y+menu.height<footer.y,'Last figure menu overlaps navigation');
   assert(await page.locator('.card-menu button').evaluateAll(nodes=>nodes.every(b=>{const r=b.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===b;})),'A figure menu action is obscured');
   await page.getByRole('button',{name:'Bearbeiten',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#editor').open);await page.locator('#editorBack').click();await page.waitForFunction(()=>!document.querySelector('#editor').open);
   for(const size of [{width:844,height:390},{width:390,height:500}]){
-   await page.setViewportSize(size);await page.evaluate(()=>window.scrollTo(0,600));await frame();
+   await page.setViewportSize(size);
+   await page.evaluate(()=>{(document.getElementById('figureScroll')??document.scrollingElement).scrollTop=600;});
+   await frame();
    const filter=await page.locator('.overview-filters').boundingBox(),nav=await page.locator('body>.bottom-nav').boundingBox();
    assert(nav.y-filter.y-filter.height>=100,'Fixed rows leave less than 100 pixels for figures');
    assert(await page.locator('#search').isVisible(),'Search disappeared in a short window');
