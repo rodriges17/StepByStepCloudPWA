@@ -582,12 +582,37 @@ button.cloud-local-open,
 
 /* Gesture feedback occupies the video without changing its bounds. */
 .video-stage{touch-action:none}
-.player-play-feedback,.player-pause-feedback,.player-seek-feedback{position:absolute;z-index:2;top:50%;transform:translate(-50%,-50%);color:#fff;background:rgba(0,0,0,.22);border:0;border-radius:50%;font-size:42px;opacity:.65;padding:16px;line-height:1.2}
-.player-play-feedback,.player-pause-feedback{left:50%}
-.player-play-feedback{width:84px;height:84px;cursor:pointer}
-.player-pause-feedback,.player-seek-feedback{pointer-events:none}
-.player-seek-feedback{font-size:25px;white-space:nowrap;border-radius:24px}
-.player-seek-feedback[data-side=left]{left:18%}.player-seek-feedback[data-side=right]{left:82%}
+.player-play-feedback,.player-seek-button,.player-seek-feedback {
+  position:absolute;
+  z-index:2;
+  top:50%;
+  transform:translate(-50%,-50%);
+  color:#fff;
+  background:rgba(0,0,0,.55);
+  border:0;
+  border-radius:999px;
+}
+.player-play-feedback{left:50%;width:68px;height:68px;padding:0;font-size:30px}
+.player-seek-button{width:52px;height:52px;padding:0;font-size:15px}
+.player-seek-button[data-side=left]{left:24%}
+.player-seek-button[data-side=right]{left:76%}
+.player-seek-feedback{pointer-events:none;top:30%;font-size:25px;white-space:nowrap;padding:8px 14px}
+.player-seek-feedback[data-side=left]{left:24%}
+.player-seek-feedback[data-side=right]{left:76%}
+.video-stage > .timeline {
+  position:absolute;
+  z-index:2;
+  inset:auto 0 0;
+  padding:8px 16px;
+  background:linear-gradient(transparent,rgba(0,0,0,.8));
+}
+.is-immersive .video-stage > .timeline {
+  padding-bottom:calc(8px + var(--player-safe-bottom,env(safe-area-inset-bottom,0px)));
+  padding-left:calc(16px + var(--player-safe-left,env(safe-area-inset-left,0px)));
+  padding-right:calc(16px + var(--player-safe-right,env(safe-area-inset-right,0px)));
+}
+.video-stage > .timeline .time-labels{color:#fff}
+.timeline input[type=range]{display:block;margin:0;height:40px;touch-action:none}
 .video-stage [hidden]{display:none!important}
 
 .player-bottom{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}

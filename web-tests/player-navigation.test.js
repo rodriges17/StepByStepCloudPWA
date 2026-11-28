@@ -12,7 +12,9 @@ async function fixture({android=false,native=false}={}) {
  const screen=win.document.querySelector('#playerScreen');screen.hidden=false;win.document.body.classList.add('playing-screen');
  const video=win.document.querySelector('#learningVideo');
  const platform=native?{setFullscreen(value){win.nativeFullscreen=value;}}:null;
- const view=createPlayerView({screen,video,native:()=>platform});
+ const view=createPlayerView({screen,video,native:()=>platform, seekBy: seconds => {
+  video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds));
+ }});
  return {win,screen,view,close:()=>win.happyDOM.abort()};
 }
 
@@ -51,4 +53,55 @@ for(const native of [false,true])test(`${native?'native Android':'PWA'} Back hid
   assert.equal(video.currentTime,3);assert.equal(video.playbackRate,.5);
   assert.equal(view.back(),false,'normal player delegates closing the figure to its owner');
  }finally{await close();}
+});
+
+
+test('tapping a running video reveals just the timeline and playback buttons', async t => {
+ t.mock.timers.enable({apis:['setTimeout']});
+ const {win,screen,close}=await fixture();
+ try {
+  const video=screen.querySelector('video');
+  Object.defineProperties(video,{readyState:{value:4},paused:{value:false}});
+  const stage=screen.querySelector('.video-stage');
+  stage.getBoundingClientRect=()=>({left:0,width:360});
+  function tap(){
+   for(const type of ['pointerdown','pointerup']) stage.dispatchEvent(new win.PointerEvent(type,{pointerId:1,isPrimary:true,clientX:180,clientY:100,bubbles:true}));
+   t.mock.timers.tick(310);
+  }
+  tap();
+  assert.equal(screen.querySelector('.player-bottom').inert,true);
+  assert.equal(screen.querySelector('.video-stage #seek')?.closest('.timeline').hidden,false);
+  assert.equal(screen.querySelector('button[aria-label="Video pausieren"]')?.hidden,false);
+  assert.equal(screen.querySelector('button[aria-label="5 Sekunden vor"]')?.hidden,false);
+  assert.equal(video.paused,false);
+  tap();
+  assert.equal(screen.querySelector('#seek').closest('.timeline').hidden,true);
+ } finally {await close();}
+});
+
+
+test('every tap in a continuous seek sequence counts, including the first', async t => {
+ t.mock.timers.enable({apis:['setTimeout']});
+ const {win,screen,close}=await fixture();
+ try {
+  const video=screen.querySelector('video');
+  Object.defineProperties(video,{readyState:{value:4},duration:{value:60}});
+  video.currentTime=20;
+  const stage=screen.querySelector('.video-stage');
+  stage.getBoundingClientRect=()=>({left:0,width:360});
+  function tap(x){
+   for(const type of ['pointerdown','pointerup']) stage.dispatchEvent(new win.PointerEvent(type,{pointerId:1,isPrimary:true,clientX:x,clientY:100,bubbles:true}));
+   t.mock.timers.tick(80);
+  }
+  tap(300); tap(300);
+  assert.equal(video.currentTime,30);
+  tap(300);
+  assert.equal(video.currentTime,35);
+  tap(300);
+  assert.equal(video.currentTime,40);
+  t.mock.timers.tick(310);
+  assert.equal(screen.querySelector('.player-bottom').inert,false);
+  tap(60); tap(60); tap(60);
+  assert.equal(video.currentTime,25);
+ } finally {await close();}
 });

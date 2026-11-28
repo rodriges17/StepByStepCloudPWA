@@ -28,7 +28,18 @@ const channel = 'BroadcastChannel' in window ? new BroadcastChannel(`salsa-train
 const loop = new ABLoop();
 let playIntent = false, wakeLock = null;
 const video = $('learningVideo');
-const playerView = createPlayerView({screen:$('playerScreen'),video,isActive:()=>!!learning,togglePlayback:()=>{if(video.paused)play();else pause();},seekBy:seconds=>{const low=loop.b!==null?loop.a:0,high=loop.b!==null?loop.b:video.duration;if(Number.isFinite(high))video.currentTime=Math.max(low,Math.min(high,video.currentTime+seconds));}});
+const playerView = createPlayerView({
+  screen: $('playerScreen'),
+  video,
+  isActive: () => !!learning,
+  togglePlayback: () => { if (video.paused) play(); else pause(); },
+  resumePlayback: () => play({duringSeek:true}),
+  seekBy: seconds => {
+    const low = loop.b !== null ? loop.a : 0;
+    const high = loop.b !== null ? loop.b : video.duration;
+    if (Number.isFinite(high)) video.currentTime = Math.max(low, Math.min(high, video.currentTime + seconds));
+  }
+});
 const playerPicker = createPlayerVideoPicker({screen:$('playerScreen'),onSelect:index=>{if(learning)loadPlayerVideo(index,!video.paused);},onOpenChange:open=>playerView.selectionChanged(open)});
 if ('ResizeObserver' in window) {
   for (const [selector, variable] of [['.overview > .heading', '--brand-header-height'], ['.page-intro', '--overview-intro-height'], ['.overview-filters', '--overview-filters-height']]) {
@@ -425,9 +436,9 @@ video.addEventListener('seeked', () => { if (learning && video.readyState >= 2) 
 function showPlayerError(message) { setError('playerError', message); $('retryPlayer').hidden = !message; }
 $('retryPlayer').onclick = () => { if (learning) loadPlayerVideo(learning.index, false); };
 video.addEventListener('error', () => { if (learning) { playIntent = false; $('videoLoading').hidden = true; showPlayerError('Dieses Video wird vom Browser nicht unterstützt oder ist nicht mehr lesbar. Bitte die Figur bearbeiten und das Video ersetzen.'); } });
-async function play() {
+async function play({duringSeek = false} = {}) {
   if (!learning) return; playIntent = true;
-  if (video.readyState < 2) return;
+  if (video.readyState < 2 && !duringSeek) return;
   if (video.ended || video.currentTime >= video.duration) video.currentTime = loop.b !== null ? loop.a : 0;
   try { video.playbackRate = learning.speed; await video.play(); }
   catch { playIntent = false; toast('Bitte auf Abspielen tippen, um die Wiedergabe zu starten.'); }
