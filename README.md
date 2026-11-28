@@ -8,7 +8,7 @@
 
 - **Installieren.** Auf Android in Chrome über **App installieren**, auf dem iPhone in Safari über **Zum Home-Bildschirm**. Auf dem Computer kannst du die App direkt im Browser öffnen.
 - **Figuren verwalten.** Pro Figur kannst du mehrere Videos, eine Beschreibung, Tags und deinen Lernstand speichern. Suche und Filter helfen dir, Figuren wiederzufinden.
-- **Offline üben.** In **Cloud-Speicher → Bibliotheken** kannst du einzelne Figuren oder eine ganze Bibliothek lokal verfügbar machen. Nach dem Download findest du die Figuren unter **Figuren**. Der Lernplayer bietet Videowahl, Wiedergabetempo von 0,25× bis 1×, 5-Sekunden-Sprünge, Fit/Crop und eine A–B-Schleife.
+- **Offline üben.** In **Cloud-Speicher → Bibliotheken** kannst du einzelne Figuren oder eine ganze Bibliothek lokal verfügbar machen. Nach dem Download findest du die Figuren unter **Figuren**. Der Lernplayer bietet Videowahl, Wiedergabetempo von 0,25× bis 1×, Zeitleiste, 5-Sekunden-Sprünge, Fit/Crop und eine A–B-Schleife.
 - **Lokal speichern und sichern.** Figuren liegen im App-Speicher oder in einem Geräteordner, sofern der Browser Ordnerzugriff unterstützt. Ein Figuren-ZIP dient zum Teilen einzelner Figuren. Ein vollständiges Backup sichert auch persönliche Lernstände. [Geräteordner](GERAETEORDNER.md) · [Backup und Wiederherstellung](BACKUP.md)
 
 ## Cloud-Bibliotheken
@@ -44,4 +44,5 @@ Der [Pages-Workflow](.github/workflows/pwa.yml) prüft Logik, Edge Function und 
 ## Weitere Varianten
 
 - [Android-App mit Cloud-Speicher](https://github.com/rodriges17/StepByStepCloudAndroid)
-- [Lokale PWA ohne Cloud-Speicher und native iPhone-App](https://github.com/rodriges17/StepByStepCloudIOS)
+- [Lokale PWA ohne Cloud-Speicher](https://github.com/rodriges17/StepByStepLocalPWA)
+- [Native iPhone-App](https://github.com/rodriges17/StepByStepCloudIOS)
