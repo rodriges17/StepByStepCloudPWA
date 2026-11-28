@@ -4,25 +4,26 @@ import { createFileDelivery } from './file-delivery.js';
 const scope = new URL('./', import.meta.url).pathname, LAST = `salsa-last-backup:${scope}:v1`;
 const n = (tag, text, cls) => { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (cls) e.className = cls; return e; };
 const size = bytes => `${(bytes / 1048576).toFixed(1)} MiB`;
-const date = value => new Date(value).toLocaleString('de');
+const partsLabel = count => `${count} ${count === 1 ? 'Teil' : 'Teile'}`;
+const date = value => new Date(value).toLocaleString('de-CH');
 let dialog, body, status, cancel, close, workflow, hooks, delivery, rendered = -1, restoreDetails;
 const action = (label, work) => { const b = n('button', label, 'secondary'); b.type = 'button'; b.onclick = () => Promise.resolve().then(work).catch(error => { status.textContent = error.message; }); return b; };
 function lastCreated() {
-  try { const data = JSON.parse(localStorage.getItem(LAST)); return data?.createdAt ? `Zuletzt erstellt am ${date(data.createdAt)} · ${data.parts} Teil(e). Das bestätigt die Erstellung, nicht das Speichern der Downloads.` : 'Noch kein vollständiges Backup erstellt.'; }
+  try { const data = JSON.parse(localStorage.getItem(LAST)); return data?.createdAt ? `Zuletzt erstellt am ${date(data.createdAt)} · ${partsLabel(data.parts)}. Prüfe, ob alle Dateien gespeichert sind.` : 'Noch kein vollständiges Backup erstellt.'; }
   catch { return 'Noch kein vollständiges Backup erstellt.'; }
 }
 function updateLast() { document.getElementById('backupLastCreated').textContent = lastCreated(); }
 function progressText(p) {
-  if (p.phase === 'commit') return 'Wiederherstellung abschließen …';
+  if (p.phase === 'commit') return 'Wiederherstellung abschliessen …';
   if (p.phase === 'scan') return `Lokalen Bestand prüfen: ${p.done} / ${p.total} Figuren …`;
   if (p.phase === 'compare') return `Vorhandene Figuren vergleichen: ${p.done} / ${p.total} …`;
   return p.total ? `${p.phase === 'verify' ? 'Sicherung prüfen' : 'Sicherung erstellen'}: ${size(p.done)} / ${size(p.total)} …` : 'Videos kopieren und prüfen …';
 }
 function createIntro() {
-  return n('p', 'Sichert alle lokalen Figuren aus App-Speicher und verbundenen Geräteordnern, einschließlich Videos, Angaben und Lernständen. Cloud-Inhalte werden nur gesichert, wenn sie lokal übernommen wurden. Anmeldedaten und Ordnerberechtigungen sind nicht enthalten.');
+  return n('p', 'Das vollständige Backup enthält alle lokalen Figuren aus dem App-Speicher und verbundenen Geräteordnern samt Videos, Beschreibungen, Tags und Lernständen. Cloud-Inhalte werden nur gesichert, wenn sie lokal übernommen wurden. Das Backup enthält keine Anmeldedaten oder Ordnerberechtigungen.');
 }
 function renderDownloads(data) {
-  body.append(n('p', `${data.figures} Figuren wurden vollständig in ${data.parts.length} Teil(e) verpackt. Lade jeden Teil herunter und bewahre die Dateien gemeinsam auf.`));
+  body.append(n('p', `Backup erstellt: ${partsLabel(data.parts.length)}. Speichere alle angebotenen Dateien und bewahre sie gemeinsam auf.`));
   data.parts.forEach((part, i) => {
     const file = new File([part.blob], part.name, { type: part.blob.type || 'application/octet-stream' });
     const box = n('section', undefined, 'cloud-card'), label = n('p', 'Noch nicht zum Download angefordert.', 'transfer-status');
@@ -48,7 +49,7 @@ function renderDownloads(data) {
 }
 function ensureRestoreInput() {
   if (restoreDetails?.isConnected) return;
-  body.replaceChildren(n('p', 'Wähle alle zusammengehörigen .salsabackup-Dateien aus. Die App prüft zunächst alle Teile. Bestehende Figuren bleiben bis zur bestätigten Übernahme unverändert. Für Figur-ZIP-Dateien verwende „Figur importieren“.'));
+  body.replaceChildren(n('p', 'Wähle alle zusammengehörigen .salsabackup-Dateien aus. Die App prüft zunächst alle Teile. Bestehende Figuren bleiben bis zur bestätigten Übernahme unverändert. Für ein Figuren-ZIP verwende „Figur importieren“.'));
   const label = n('label', 'Alle Sicherungsteile auswählen'), input = n('input');
   input.type = 'file'; input.multiple = true; input.accept = '.salsabackup,application/octet-stream';
   input.onchange = () => workflow.readFiles([...input.files]);
@@ -62,8 +63,8 @@ function renderRestore(data) {
   if (data.supported) data.folders.forEach(f => target.append(new Option(`Geräteordner: ${f.name}`, f.id)));
   target.value = data.target ?? ''; target.onchange = () => workflow.setTarget(target.value || null); wrap.append(target); restoreDetails.append(wrap);
   restoreDetails.append(n('p', 'Konflikte werden mit Figuren am ausgewählten Zielspeicher verglichen. Figuren an anderen Speicherorten bleiben erhalten.'));
-  if (!data.supported) restoreDetails.append(n('p', 'Dieser Browser unterstützt keine Geräteordner. Die Wiederherstellung verwendet den App-Speicher.'));
-  else if (!data.folders.length) restoreDetails.append(n('p', 'Für einen Geräteordner richte zuerst unter Speicherort einen Ordner ein. Du kannst dieses Fenster schließen und danach die Sicherung erneut auswählen.'));
+  if (!data.supported) restoreDetails.append(n('p', 'Geräteordner sind hier nicht verfügbar. Das Backup wird im App-Speicher wiederhergestellt.'));
+  else if (!data.folders.length) restoreDetails.append(n('p', 'Für einen Geräteordner richte zuerst unter Speicherort einen Ordner ein. Du kannst dieses Fenster schliessen und danach die Sicherung erneut auswählen.'));
   restoreDetails.append(action('Wiederherstellung prüfen', () => workflow.checkRestore()));
   if (!data.rows) return;
   const counts = { new: 0, identical: 0, conflict: 0 }, conflicts = n('div');
@@ -101,13 +102,13 @@ function render(state) {
       if (state.view === 'create-start') {
         const retry = action('Bestand erneut prüfen', () => workflow.startCreate()); retry.dataset.retry = 'true'; body.append(createIntro(), retry);
       } else if (state.view === 'access') {
-        body.append(n('p', 'Für ein vollständiges Backup benötigt die App Zugriff auf alle Geräteordner mit gespeicherten Figuren. Die Ordnerauswahl ist gespeichert. Bitte erlaube den Zugriff; anschließend geht es automatisch weiter.'));
+        body.append(n('p', 'Für ein vollständiges Backup benötigt die App Zugriff auf alle Geräteordner mit gespeicherten Figuren. Die Ordnerauswahl ist gespeichert. Erlaube den Zugriff. Sobald alle benötigten Ordner zugänglich sind, geht es automatisch weiter.'));
         state.data.folders.forEach(folder => {
-          const box = n('section', undefined, 'cloud-card'); box.append(n('h3', folder.name), n('p', `${folder.figureCount} Figur(en) im Geräteordner`), action('Ordnerzugriff erlauben', () => workflow.grantAccess(folder.id))); body.append(box);
+          const box = n('section', undefined, 'cloud-card'); box.append(n('h3', folder.name), n('p', `${folder.figureCount} ${folder.figureCount === 1 ? 'Figur' : 'Figuren'} im Geräteordner`), action('Ordnerzugriff erlauben', () => workflow.grantAccess(folder.id))); body.append(box);
         });
       } else if (state.view === 'create-ready') {
         const data = state.data;
-        body.append(createIntro(), n('p', `${data.figures} Figuren · ${data.videos} Videos · ${size(data.bytes)} Videodaten · ${data.parts} Sicherungsteil(e), jeweils höchstens 250 MiB.`), n('p', 'Die Sicherung ist nicht verschlüsselt. Bewahre alle Teile gemeinsam auf. Für eine vollständige Wiederherstellung werden alle Teile benötigt.'), action('Backup jetzt erstellen', () => workflow.create()));
+        body.append(createIntro(), n('p', `${data.figures} Figuren · ${data.videos} Videos · ${size(data.bytes)} Videodaten · ${partsLabel(data.parts)}, jeweils höchstens 250 MiB.`), n('p', 'Die Sicherung ist nicht verschlüsselt. Bewahre alle Teile gemeinsam auf. Für eine vollständige Wiederherstellung werden alle Teile benötigt.'), action('Backup jetzt erstellen', () => workflow.create()));
       } else if (state.view === 'created') renderDownloads(state.data);
       else if (state.view === 'restored') body.append(n('p', `${state.data.count} Figuren erfolgreich wiederhergestellt. Lernstände und Erstellungsdaten wurden übernommen.`));
     }

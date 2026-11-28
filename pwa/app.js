@@ -5,7 +5,7 @@ import { connectTagSuggestions } from './tag-suggestions.js';
 import { mountTagPicker } from './tag-picker.js';
 import { cloudLocalIndex } from './cloud-local.js';
 import { createLocalCardsView, tagIcon } from './figure-card.js';
-const APP_VERSION = '2026-10-31-player-gestures-v1';
+const APP_VERSION = '2026-11-28-settings-v1';
 import { initBackup } from './backup-ui.js';
 import { createFileDelivery } from './file-delivery.js';
 import { createFigureZipWorkflow } from './figure-zip.js';
@@ -558,7 +558,7 @@ async function renderDeviceStorage() {
   if (settings.supported) {
     if (settings.folders.length) choices.append(button('Weiteren Geräteordner auswählen', chooseDeviceFolder, 'secondary'));
     else choices.append(choice('choose', 'Geräteordner auswählen', 'Videos in einem Ordner auf diesem Gerät', false, chooseDeviceFolder));
-  } else choices.append(el('p', 'muted', 'Geräteordner werden in diesem Browser nicht unterstützt. Verwende aktuelles Chrome auf Android oder Desktop. Auf iPhone/Safari bleibt der App-Speicher mit ZIP-Sicherung verfügbar.'));
+  } else choices.append(el('p', 'muted', 'Geräteordner werden in diesem Browser nicht unterstützt. Du kannst den App-Speicher und das vollständige Backup verwenden.'));
   controls.append(choices);
 }
 $('transferProgressDialog').addEventListener('cancel', event => event.preventDefault());
@@ -594,27 +594,33 @@ async function moveFigure(figure) {
   finally { $('transferProgressDialog').close(); opening = false; }
 }
 
-let offlineReady = false;
+function showOfflineStatus(state) {
+  document.documentElement.dataset.offlineStatus = state;
+  const messages = {
+    preparing: 'Die Offline-Nutzung wird vorbereitet.',
+    ready: 'Die App ist offline nutzbar. Für Videos im Geräteordner muss der Ordnerzugriff erlaubt sein.',
+    error: 'Die Offline-Vorbereitung ist fehlgeschlagen. Lade die App mit Internetverbindung neu.',
+    unsupported: 'Dieser Browser unterstützt den Offline-Start der Web-App nicht.'
+  };
+  $('offlineDetails').textContent = messages[state];
+}
 async function storageInfo() {
   const request = $('persistStorage');
   request.hidden = true;
   try {
     const estimate = await navigator.storage?.estimate?.();
-    if (window.AndroidPlatform) {
-      $('storageDetails').textContent = `${estimate ? `Ungefähr ${Math.round((estimate.usage ?? 0) / 1048576)} MB lokal belegt. ` : ''}Die App verwendet den privaten Android-App-Speicher.`;
-      $('persistenceResult').textContent = 'Keine zusätzliche Speicherfreigabe erforderlich. Eine Deinstallation oder „App-Daten löschen“ entfernt deine lokalen Daten. Nutze Backups.';
-    } else {
-      const persistent = await navigator.storage?.persisted?.();
-      $('storageDetails').textContent = `${estimate ? `Ungefähr ${Math.round((estimate.usage ?? 0) / 1048576)} MB lokal belegt. ` : ''}${persistent ? 'Dauerhafter Speicher ist aktiv.' : 'Dauerhafter Speicher ist bisher nicht bestätigt.'}`;
-      request.hidden = persistent || typeof navigator.storage?.persist !== 'function';
-      if (persistent) $('persistenceResult').textContent = '';
-    }
+    const persistent = await navigator.storage?.persisted?.();
+    const canRequest = typeof navigator.storage?.persist === 'function';
+    const usage = Number.isFinite(estimate?.usage) ? `Geschätzter Browser-Speicher für diese Website: ${Math.round(estimate.usage / 1048576)} MiB. ` : '';
+    const protection = persistent ? 'Dauerhafter Speicher ist aktiv.' : canRequest ? 'Dauerhafter Speicher ist bisher nicht bestätigt.' : 'Dieser Browser bietet keine Anfrage für dauerhaften Speicher an.';
+    $('storageDetails').textContent = usage + protection;
+    request.hidden = persistent || !canRequest;
+    if (persistent || !canRequest) $('persistenceResult').textContent = '';
   } catch {
     $('storageDetails').textContent = 'Der Speicherstatus konnte nicht geprüft werden.';
-    request.hidden = !!window.AndroidPlatform || typeof navigator.storage?.persist !== 'function';
+    request.hidden = typeof navigator.storage?.persist !== 'function';
   }
   try { await renderDeviceStorage(); } catch (e) { $('deviceStorageStatus').textContent = storageMessage(e); }
-  $('offlineDetails').textContent = offlineReady ? 'Die App ist für Offline-Aufrufe bereit. Gespeicherte Videos funktionieren ohne Netz.' : document.documentElement.dataset.offlineStatus === 'error' ? 'Die Offline-Vorbereitung ist fehlgeschlagen. Bitte die App mit Internetverbindung neu laden.' : 'Die Offline-Nutzung wird beim ersten Online-Aufruf vorbereitet.';
 }
 function showInfoDialog() {
   const dialog = $('infoDialog');
@@ -624,7 +630,7 @@ function showInfoDialog() {
   dialog.scrollTop = 0;
 }
 $('infoButton').onclick = () => { $('themeChoice').value = window.stepAppearance.get(); storageInfo(); showInfoDialog(); };
-$('themeChoice').onchange = () => { $('themeStatus').textContent = window.stepAppearance.set($('themeChoice').value) ? 'Die Auswahl wird auf diesem Gerät gespeichert.' : 'Das Farbschema gilt für diesen Aufruf. Der Browser konnte die Auswahl nicht speichern.'; };
+$('themeChoice').onchange = () => { $('themeStatus').textContent = window.stepAppearance.set($('themeChoice').value) ? 'Das Farbschema wird für diese App gespeichert.' : 'Das Farbschema gilt für diesen Aufruf. Die App konnte die Auswahl nicht speichern.'; };
 $('closeInfoTop').onclick = () => { if (!deviceBusy) $('infoDialog').close(); };
 $('infoDialog').addEventListener('cancel', event => { if (deviceBusy) event.preventDefault(); });
 $('persistStorage').onclick = async () => {
@@ -632,23 +638,25 @@ $('persistStorage').onclick = async () => {
   request.disabled = true; request.setAttribute('aria-busy', 'true'); request.textContent = 'Speicherfreigabe wird geprüft …';
   try {
     const granted = await navigator.storage.persist();
-    $('persistenceResult').textContent = granted ? 'Dauerhafter Speicher ist aktiv.' : 'Der Browser hat die Anfrage nicht bestätigt. Die App bleibt nutzbar. Auf dem Home-Bildschirm installierte Apps werden bevorzugt berücksichtigt.';
+    $('persistenceResult').textContent = granted ? 'Dauerhafter Speicher ist aktiv.' : 'Der Browser hat die Anfrage nicht bestätigt. Du kannst die App weiter nutzen und später erneut anfragen.';
     await storageInfo();
   } catch { $('persistenceResult').textContent = 'Die Speicheranfrage konnte nicht abgeschlossen werden. Bitte erneut versuchen.'; }
   finally { request.disabled = false; request.removeAttribute('aria-busy'); request.textContent = 'Dauerhaften Speicher anfragen'; }
 };
 if ('serviceWorker' in navigator) {
-  document.documentElement.dataset.offlineStatus = 'preparing';
+  showOfflineStatus('preparing');
   navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(registration => {
     const update = () => { if (navigator.onLine) registration.update().catch(() => {}); };
     document.addEventListener('visibilitychange', () => { if (!document.hidden) update(); });
     window.addEventListener('online', update);
     return navigator.serviceWorker.ready;
   }).then(() => {
-    offlineReady = true; document.documentElement.dataset.offlineStatus = 'ready';
-  }).catch(() => { document.documentElement.dataset.offlineStatus = 'error'; });
+    showOfflineStatus('ready');
+  }).catch(() => showOfflineStatus('error'));
+} else {
+  showOfflineStatus('unsupported');
 }
-window.addEventListener('offline', () => toast('Du bist offline. Deine gespeicherten Videos bleiben verfügbar.'));
+window.addEventListener('offline', () => toast('Du bist offline. Lokal gespeicherte Videos sind verfügbar, wenn die App auf ihren Speicherort zugreifen kann.'));
 renderFilters();
 
 // Keep the fixed save footer above the iOS software keyboard where Visual Viewport is available.
