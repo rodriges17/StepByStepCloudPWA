@@ -1,172 +1,48 @@
-# Salsa Trainer Cloud
+# Step by Step – Cloud-PWA
 
-[Cloud-Speicher und Figurenreferenzen](docs/CLOUD-SPEICHER.md)
+**Deine Schritte. Dein Tempo.** Speichere Tanzfiguren mit eigenen Videos, Beschreibungen und Tags. Übe mit lokal gespeicherten Figuren offline oder entdecke und teile Figuren über Cloud-Bibliotheken.
 
-[Admin-Anmeldung mit E-Mail und Passwort](docs/ADMIN-ANMELDUNG.md)
+**[App öffnen](https://rodriges17.github.io/StepByStepCloudPWA/)** · **[Installation und erste Schritte](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/installation.html)**
 
-## Kurzanleitungen
+## App nutzen
 
-- **[Installation & erste Schritte – Anleitung öffnen](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/installation.html)** · [Markdown-Datei](docs/INSTALLATION.md)
+- **Installieren.** Auf Android in Chrome über **App installieren**, auf dem iPhone in Safari über **Zum Home-Bildschirm**. Auf dem Computer kannst du die App direkt im Browser öffnen.
+- **Figuren verwalten.** Pro Figur kannst du mehrere Videos, eine Beschreibung, Tags und deinen Lernstand speichern. Suche und Filter helfen dir, Figuren wiederzufinden.
+- **Offline üben.** In **Cloud-Speicher → Bibliotheken** kannst du einzelne Figuren oder eine ganze Bibliothek lokal verfügbar machen. Nach dem Download findest du die Figuren unter **Figuren**. Der Lernplayer bietet Videowahl, Wiedergabetempo von 0,25× bis 1×, Zeitleiste, 5-Sekunden-Sprünge, Fit/Crop und eine A–B-Schleife.
+- **Lokal speichern und sichern.** Figuren liegen im App-Speicher oder in einem Geräteordner, sofern der Browser Ordnerzugriff unterstützt. Ein Figuren-ZIP dient zum Teilen einzelner Figuren. Ein vollständiges Backup sichert auch persönliche Lernstände. [Geräteordner](GERAETEORDNER.md) · [Backup und Wiederherstellung](BACKUP.md)
 
-- **[Bibliotheken teilen – Anleitung öffnen](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/teilen.html)** · [HTML-Datei](pwa/anleitungen/teilen.html)
-- **[Personen & Zugriff verwalten – Anleitung öffnen](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/benutzerverwaltung.html)** · [HTML-Datei](pwa/anleitungen/benutzerverwaltung.html)
+## Cloud-Bibliotheken
 
-Die Anleitungen gelten für Cloud-PWA und Android. Beide HTML-Dateien sind eigenständig, mobil lesbar und zum Herunterladen und Drucken geeignet.
+Öffentliche Bibliotheken kannst du ohne Konto öffnen. Private Bibliotheken erfordern eine Freigabe. Angemeldete Personen können eigene Figuren hochladen und in Bibliotheken verwenden. Eine Cloud-Figur hat einen aktuellen Inhalt, auf den mehrere Bibliotheken verweisen können. Der Besitzer und Plattformadministratoren können den Inhalt bearbeiten oder löschen.
 
+- [Bibliotheken teilen](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/teilen.html)
+- [Personen und Zugriff verwalten](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/benutzerverwaltung.html)
 
-Eigenständige Cloud-Variante der Salsa-PWA. Zieladresse: https://rodriges17.github.io/StepByStepCloudPWA/
+## Entwicklung
 
-Die Offline-App unter https://rodriges17.github.io/SalsaAppIOS/ bleibt separat bestehen. Lokale Figuren können per ZIP kopiert werden.
-
-# Salsa Trainer – PWA und native iPhone-App
-
-## PWA auf iPhone oder Android
-
-Die Web-App liegt im Ordner `pwa/` und wird durch `.github/workflows/pwa.yml` nach bestandenen Tests auf **GitHub Pages** veröffentlicht.
-
-Geplante Adresse: **https://rodriges17.github.io/SalsaApp/**. Ob die Veröffentlichung bereits erfolgreich war, zeigt der Workflow „PWA tests and GitHub Pages“ unter Actions. Falls GitHub die erstmalige Pages-Aktivierung für den Workflow-Token verweigert: Repository → Settings → Pages → Build and deployment → Source → **GitHub Actions**, dann den Workflow erneut ausführen.
-
-Auf dem iPhone den Link in Safari öffnen → Teilen → **Zum Home-Bildschirm** → als Web-App öffnen. Erst die installierte App über ihr Symbol starten und dort die Videos importieren. Dafür ist weder ein Mac noch Apple-Signierung erforderlich.
-
-### PWA-Funktionen
-
-- Ursprüngliches dunkles Design, Suche über Name/Beschreibung/Tags, Lernstände, Tags und Sortierung.
-- Figuren erstellen, bearbeiten und löschen; mehrere lokale Videos mit Namen, Reihenfolge, Ersetzen und Entfernen. Das erste Video liefert Vorschaubild und Dauer.
-- Import über den Foto-/Dateiauswahldialog. Jedes neue Video muss vor dem Speichern in der abspielbaren Vorschau bestätigt werden. Abgebrochene Ersatzvideos ändern die bisherige Liste nicht.
-- Videos werden in einem separaten lokalen **Cache-Storage-Medienspeicher** abgelegt; Metadaten, Reihenfolge und Verweise werden anschließend in einer **IndexedDB-Transaktion** übernommen. Bei Quotenfehlern oder Konflikten werden neue Mediendateien verworfen; bisherige Dateien bleiben bis nach dem erfolgreichen Commit erhalten. Kleine Vorschaubilder werden als Binärpuffer gespeichert, um WebKits Einschränkung bei IndexedDB-Blobs zu vermeiden. Originaldateien werden nicht verändert.
-- Zurück-Buttons und Browser-Zurück mit Verwerfen-Dialog für ungespeicherte Änderungen. Während des Speicherns kann der Editor nicht verlassen werden.
-- Lernplayer mit Videowahl, 0,25×/0,5×/0,75×/1×, −5 Sekunden, Fit/Crop, Gesamtloop und A–B-Schleife. Videowechsel löscht A/B, behält die übrigen Einstellungen. Hintergrund und geschlossene Ansicht pausieren die Wiedergabe. Bildschirm-Wachhalten wird genutzt, sofern der Browser es anbietet.
-- Manueller Formatknopf dreht die **Player-Ansicht** im Hochformat um 90°. Die Systemausrichtung kann eine iPhone-PWA nicht zuverlässig sperren. Native Vollbildwiedergabe ist zusätzlich verfügbar, soweit der Browser sie unterstützt.
-- Service Worker speichert ausschließlich die App-Dateien. Nach „Offline bereit“ funktionieren Neustart und lokale Videowiedergabe ohne Netz. Keine Video-Uploads, Analytics, externen Fonts oder Server-Datenbank.
-
-### PWA-Grenzen
-
-Die gespeicherten Videos bleiben nur in diesem Browser-/App-Speicher auf diesem Gerät. Website-Daten löschen entfernt die Kopien. Der Browser kann Speicherquoten setzen und nicht dauerhaft geschützte Daten bei Platzmangel löschen. Unter „Installation & Speicher“ lässt sich dauerhafter Speicher anfragen; die Entscheidung trifft der Browser. Es gibt kein Backup und keine automatische Übernahme der Android-/Swift-Bibliothek.
-
-Auf dem iPhone kann die PWA nicht als Empfangsziel für „Teilen“ registriert werden; Videos werden innerhalb der App importiert. Abspielbare Codecs hängen vom Browser ab (H.264/MP4 ist am breitesten unterstützt). Bei erzwungenem Beenden oder Neuladen gehen ungespeicherte Entwürfe verloren; die bisher gespeicherten Figuren bleiben erhalten. Safari und eine Home-Screen-App können getrennte Speicherbereiche verwenden – daher vor dem Import installieren.
-
-### PWA-Tests und Entwicklung
-
-Die App selbst hat keine Laufzeit-Abhängigkeiten und keinen Buildschritt. `npm test` führt Logiktests aus. Der CI-Workflow testet auf einem macOS-Runner mit nativer MP4-Unterstützung, installiert Playwright, erzeugt zwei synthetische H.264-Videos mit FFmpeg und testet Chrome/Chromium mit MP4-Unterstützung in Mobilansicht sowie WebKit/iPhone-Ansicht. Browser-Tests umfassen Mehrfachimport, Vorschauen, Player-Einstellungen, A/B-Steuerung, Formatwechsel, Offline-Neustart und -Wiedergabe, Umbenennen/Reihenfolge, verworfenen Ersatz, Mindestvideozahl, Verwerfen, Löschen, ungültige Medien und Transaktionskonflikte. Screenshots und Fehlertraces liegen im Actions-Artefakt `pwa-browser-results`.
+Die statische Web-App liegt in [`pwa/`](pwa/) und hat keinen Buildschritt. Die Supabase-Migrationen und die Edge Function `cloud` liegen in [`supabase/`](supabase/). Verwende Node.js 22 und Python 3 für die lokale Entwicklung.
 
 ```sh
-npm install
+npm ci
 npm test
-# Für den manuellen Browseraufruf auf dem eigenen Rechner:
 python3 -m http.server 4173
-# http://localhost:4173/pwa/
 ```
 
-Bei Änderungen an den App-Dateien die Versionskennung in `pwa/sw.js` erhöhen, damit installierte PWAs den neuen App-Cache erhalten. Gespeicherte Nutzervideos gehören niemals in den Git- oder Pages-Ordner.
-
----
-
-## Native Swift-App für iPhone
-
-Native, private Offline-App für eigene Salsa-Videos. SwiftUI / UIKit / AVFoundation, iPhone mit **iOS 17 oder neuer**. Kein Server, Login, Tracking oder Cloud-Backup. Videos und Metadaten bleiben im lokalen App-Group-Speicher; der Bibliotheksordner wird vom Gerätebackup ausgeschlossen. Deinstallation beider Komponenten löscht die Daten.
-
-## Funktionen
-
-- Übersicht im ursprünglichen dunklen Design: Vorschau, Dauer, Videoanzahl, Suche, Lernstände „Neu / Am Üben / Sitzt“, Tags und Sortierung.
-- Neue Figuren und Bearbeiten/Löschen über das Kontextmenü (lange auf eine Figur drücken).
-- Titel, Beschreibung, Lernstand und Tags; mehrere Videos pro Figur mit Namen, Reihenfolge, Ersetzen und Entfernen. Mindestens ein Video bleibt erforderlich.
-- Import aus Fotos oder Dateien; vor Übernahme jedes neue Video abspielen/prüfen und bestätigen. Eine temporäre Stagingkopie ist für iOS-Dateifreigaben notwendig. Erst „Figur speichern“ erzeugt dauerhafte private Kopien. Originaldateien werden nicht verändert.
-- Erstes Video liefert Vorschaubild und Dauer. Videos können in beliebiger Reihenfolge bestätigt werden; „Alle neuen Videos prüfen“ führt durch die noch offenen Vorschauen.
-- Zurück oben links; Warnung bei ungespeicherten Änderungen. Speichern sperrt die Bedienung während der Kopie. Fehlgeschlagene Importe rollen alle neuen Dateien zurück. Gleichzeitige Änderungen aus App und Erweiterung werden erkannt.
-- Lernplayer startet im Hochformat; manueller Hoch-/Querformatwechsel, Fit/Crop ohne Verzerrung, Videowahl, 0,25×/0,5×/0,75×/1×, −5 Sekunden, Gesamtloop und A–B-Loop (gegenseitig ausschließend). Videowechsel löscht A/B und beginnt bei 0, die übrigen Einstellungen bleiben bestehen. Hintergrund pausiert; Bildschirm bleibt während Wiedergabe an.
-- Teilen aus Fotos/Dateien → „Salsa Trainer“: neue oder bestehende Figur wählen, Videos prüfen und speichern. Der Import läuft im iOS-Teilen-Fenster; danach kehrt iOS zur Quell-App zurück. Die Haupt-App aktualisiert ihre Übersicht beim Öffnen. Die Erweiterung öffnet nicht eigenmächtig die Haupt-App.
-
-## Build ohne eigenen Mac
-
-Unter **Actions → iOS build and tests** läuft der Build auf einem GitHub-macOS-Runner. Der Workflow generiert das Xcode-Projekt, führt Unit-/UI-Tests aus und archiviert App und Teilen-Erweiterung für echte iPhones ohne Signierung. Die Artefakte enthalten Testprotokolle, `.xcresult`, Xcode-Quellprojekt und ein **unsigniertes `.xcarchive`**.
-
-**Das Archiv ist noch nicht auf einem iPhone installierbar. Es ist keine installierbare IPA und kein TestFlight-Link.** Für die Installation muss ein Apple-Entwicklerkonto mit gültigen Signierungsprofilen eingerichtet werden. Für TestFlight ist eine Apple-Developer-Program-Mitgliedschaft nötig. GitHub kann die Apple-Signierung nicht ersetzen. macOS-Runner eines privaten Repositories können GitHub-Actions-Kontingent verbrauchen.
-
-## Lokal auf einem Mac
+Öffne [localhost:4173/pwa/](http://localhost:4173/pwa/). Für die Browser-Tests beende den manuellen Server. Playwright startet seinen eigenen Testserver auf demselben Port.
 
 ```sh
-brew install xcodegen
-cd ios
-xcodegen generate
-open SalsaTrainer.xcodeproj
+npx playwright install chrome webkit
+npm run test:browser
 ```
 
-In Xcode für **SalsaTrainer und SalsaShare** dasselbe Entwicklerteam setzen. Bundle-IDs bei Bedarf eindeutig anpassen. App Group `group.com.rodriges17.SalsaTrainer` für beide Targets beim Apple-Konto registrieren und in beiden Signierungsprofilen aktivieren. Bei geänderter Gruppe zusätzlich `APP_GROUP` im Projekt und `AppGroupIdentifier` in beiden Info-Plists anpassen. Kein Fallback auf getrennte Speicherorte: fehlende App-Group-Berechtigung erzeugt eine sichtbare Fehlermeldung.
+Der [Pages-Workflow](.github/workflows/pwa.yml) prüft Logik, Edge Function und Browser-Verhalten in Chromium und WebKit. Bei passenden Änderungen auf `main` folgt nach erfolgreichen Tests die Veröffentlichung auf GitHub Pages. Pull Requests führen die Prüfungen ohne Pages-Deployment aus. Änderungen an zwischengespeicherten App-Dateien brauchen eine neue Cache-Kennung in [`pwa/sw.js`](pwa/sw.js).
 
-Für ein TestFlight-Release das vorhandene App-Icon prüfen, Release auf einem echten Gerät prüfen und in Xcode **Product → Archive → Distribute App → App Store Connect** verwenden. Zertifikate, private Schlüssel und Provisioning-Profile gehören nicht ins Repository. Es ist noch kein Apple-Konto und keine Signierungsidentität mit diesem Projekt verbunden.
+- [Supabase-Einrichtung](CLOUD-EINRICHTUNG.md#einrichtung-im-dashboard)
+- [Figuren-Download](docs/FIGUREN-DOWNLOAD.md)
+- [Cloud-Anmeldung für Plattformadministratoren](docs/ADMIN-ANMELDUNG.md)
 
-## Tests und Grenzen
+## Weitere Varianten
 
-`LibraryTests`: Byte-identische Kopie, unveränderte Originale, Bestätigungspflicht, Rollback bei zweitem Video, Umbenennen/Reihenfolge/Entfernen, Konflikterkennung, fehlende Quelle, Mindestvideozahl/fremde Dateien, Löschen, Pfadprüfung, Loopgrenzen echtes AVFoundation-Video sowie Videowechsel mit Beibehaltung der Lerneinstellungen und Pausieren während eines Sprungs. `NavigationTests`: Übersicht, Editor, Speichersperre ohne Video Verwerfen-Dialog sowie Multi-Video-Player, Fit/Crop und manueller Hoch-/Querformatwechsel mit synthetischen Videos.
-
-Der tatsächliche CI-Status steht unter Actions; nur ein grüner Lauf bestätigt Build und Tests. Hardware-Tests (insbesondere echte Fotos-/Dateien-Freigabe, große Videos, Geräteausrichtung, A–B-Wiedergabe und App-Group-Signierung) bleiben vor TestFlight erforderlich. Android-Daten werden nicht automatisch auf iOS übertragen.
-
-## Figuren zwischen PWAs teilen
-
-In der Figurenübersicht **⋮ → Figur teilen** wählen. Alle Videos sind zunächst ausgewählt; einzelne können abgewählt werden. **ZIP vorbereiten** erstellt ein Paket mit unveränderten Originalvideos, Name, Beschreibung, Tags, Videonamen und Reihenfolge. Persönlicher Lernstand und interne IDs werden nicht übertragen. Maximal 250 MiB (in der Oberfläche „250 MB“), 100 Videos.
-
-Danach **ZIP teilen** wählen, wenn das Gerät Datei-Teilen unterstützt. WhatsApp wird im Systemdialog gewählt. Alternativ **ZIP speichern** und in WhatsApp als **Dokument** anhängen. Die App lädt dabei keine Videos auf einen eigenen Server hoch.
-
-Empfänger speichern den Anhang in „Dateien“, öffnen die PWA und wählen **Figur importieren**. Alle neuen Videos müssen in der Vorschau bestätigt werden. Erst **Figur speichern** legt eine neue lokale Figur an, mit Lernstand **Neu**. Vorhandene Figuren werden nicht überschrieben. Bei einem wiedererkannten Paket fragt die App nach, ob eine weitere Kopie angelegt werden soll. Ein Abbruch legt keine dauerhaften Videos an.
-
-Das funktioniert zunächst ausschließlich zwischen PWAs. Die native Android- und iOS-App unterstützen das Format noch nicht. Direktes Teilen und die Zuverlässigkeit großer Pakete müssen zusätzlich auf echten Smartphones geprüft werden.
-
-### Austauschformat v1
-
-Standard-ZIP, Methode STORE (keine Komprimierung), UTF-8-Dateinamen, ohne ZIP64, Verschlüsselung, Kommentare, Extra-Felder oder Data Descriptors. Enthalten sind `figure.json` und `videos/1.mp4` usw. `figure.json` enthält `format: "salsa-figure"`, `version: 1`, `title`, `description`, `tags` und `videos: [{path, name, type, size}]`. Unterstützte MIME-Typen: MP4, QuickTime, M4V, WebM, Ogg. Das jeweilige Gerät muss das Video zusätzlich abspielen können.
-
-Der Import prüft Größe, Struktur, Pfade, Anzahl, CRC32-Prüfsummen und Schema vor dem Öffnen des Entwurfs. Fremde oder nachträglich neu komprimierte ZIP-Dateien werden abgewiesen. Der Wiederholungshinweis verwendet SHA-256 über normalisierte Metadaten, Größen und CRC32; er ist keine Authentizitätsprüfung. Der Fingerabdruck wird zusammen mit der Figur gespeichert und beim Bearbeiten erhalten.
-
-## Cloud-Bibliotheken (Testversion)
-
-Die PWA erhält öffentliche/private Bibliotheken, eingeladene Mitwirkende, Freigaben, manuelle Anmeldelinks und lokale Offline-Übernahme. Die kostenlose Testkonfiguration nutzt einen privaten Supabase-Bucket mit 900 MB Gesamtlimit und 50 MB je Video. Plattformfreigaben und Quoten werden serverseitig geprüft.
-
-Einrichtung und Bedienung: [CLOUD-EINRICHTUNG.md](CLOUD-EINRICHTUNG.md). Validierung und Grenzen: [CLOUD-TESTBERICHT.md](CLOUD-TESTBERICHT.md). Die Cloud-Variante wird ausschließlich aus diesem Repository veröffentlicht. Die bestehende Offline-App bleibt im separaten Repository `SalsaAppIOS`.
-
-
-## Geräteordner
-
-Optionale lokale Ordnerbibliothek: [Bedienung, Wiederherstellung und Grenzen](GERAETEORDNER.md).
-
-
-## Vollständiges Backup
-
-Lokale Sicherung inklusive Videos und Lernständen: [Bedienung und Wiederherstellung](BACKUP.md). Das vollständige Backup ist vom Figur-ZIP-Austausch getrennt.
-
-Eigene Cloud-Figuren lassen sich mit „Lokal übernehmen“ direkt und ohne Bibliothekszuordnung herunterladen. Neueste Version und ältere Versionen unterstützen Videoauswahl und werden ohne Vorschau oder Bearbeitung direkt lokal gespeichert: mit Beschreibung, Tags und Lernstatus „Neu“. Bereits übernommene Auswahlen werden als lokal vorhanden markiert; bei passenden lokalen Figuren stehen Ersetzen, separate Kopie und Abbrechen zur Wahl. Ersetzen behält Lernstatus und Speicherort und speichert erst nach ausdrücklicher Auswahl.
-
-Beim lokalen Speichern werden Prüfsummen mit einer schnelleren indizierten Schleife berechnet. Der Speicherstatus und ein unbestimmter Fortschrittsbalken werden vor dem Kopieren sichtbar. Videokopien werden weiterhin vollständig geprüft.
-
-Suche und Lernstand-/Tagfilter bleiben beim Scrollen unter dem festen Markenheader und Seitentitel sichtbar. Die Positionen folgen den gemessenen Zeilenhöhen.
-
-Der geprüfte gemeinsame Funktionsumfang und die Plattformadapter sind in [docs/FEATURE-PARITY.md](docs/FEATURE-PARITY.md) beschrieben. Die Regressionen vom 22.10.2026 sind korrigiert: reparierbarer Cloud-Reimport, erreichbare Menüs, kompakte Querformat-Übersicht, synchroner Playerzustand und weniger doppelte Medienprüfung.
-
-
-ZIP-Speichern (23.10.2026): Ein eigener Button startet den Speicherort-Dialog,
-wenn der Browser ihn unterstützt; sonst wird der Browser-Download unmittelbar
-im Tippen ausgelöst. Status und Spinner zeigen ZIP-Erstellung und Dateiübergabe.
-Fehler und Abbruch lassen die vorbereitete ZIP zum Wiederholen erhalten.
-„Download angefordert“ bestätigt die Übergabe an den Browser, nicht dessen
-Speicherabschluss. Die native Android-App übergibt Dateien in begrenzten Blöcken an den nativen
-Speichern-/Teilen-Dialog. Lernstände bleiben vom Figur-ZIP ausgeschlossen.
-
-### Figur-ZIP und Dateiübergabe
-
-`pwa/figure-zip.js` bündelt Videoauswahl, ZIP-Erstellung, Abbruch, vorbereitetes Archiv und Wiederholung. Die Oberfläche liest Zustände und löst Aktionen aus; sie verwaltet keine zweite Kopie des Exportzustands. Änderungen der Auswahl verwerfen das vorbereitete Archiv. Schließen bricht die Erstellung ab; während der Dateiübergabe bleibt der Dialog offen.
-
-`pwa/file-delivery.js` führt Speichern und Teilen aus, verhindert parallele Übergaben und hält Status sowie Fehler für einen erneuten Versuch bereit. Der Picker beziehungsweise die native Übergabe startet synchron im ursprünglichen Klick. Browser-Downloads werden als angefordert gemeldet; nur ein erfolgreich geschriebener Picker-Stream wird als gespeichert bestätigt. Der Download-Link bleibt im aktiven Dialog und seine URL lange genug zum Einlesen erhalten.
-
-Das vollständige Backup behält `backup-workflow.js` und sein eigenes Archivformat einschließlich Lernständen. Nur die Übergabe fertiger Sicherungsteile verwendet dasselbe Datei-Modul. Android verwendet einen gemeinsamen Adapter mit kleinen Blöcken und Abbruchsignal, auch für die älteren nativen Ansichten.
-
-Verhaltenstests liegen in `web-tests/figure-zip.test.js`; Browserprüfungen schützen zusätzlich echte Downloads, Picker-Aktivierung und Wiederholungen. Archivtests prüfen unveränderte Videodaten sowie die getrennte Behandlung persönlicher Lernstände.
-
-### Lokale Originale nach neuen Cloud-Uploads
-
-Neue erfolgreiche Uploads speichern auf diesem Gerät eine Zuordnung aus Konto, Cloud-Version, lokalem Speicherort und den ausgewählten Video-IDs (`pwa/cloud-local.js`). Umbenennen und Lernstand ändern diese Zuordnung nicht. Entfernte oder ersetzte Videos zählen nicht mehr als verfügbar; fehlt der Ordnerzugriff, zeigt die Oberfläche die bekannte Zuordnung ohne Verfügbarkeit zu bestätigen. Andere Cloud-Versionen und Konten bleiben getrennt. Frühere Uploads werden nicht nachträglich zugeordnet. Die Prüfung lädt keine Videos zum Vergleich herunter und schreibt keine lokalen Figuren oder Lernstände um.
-
-Die Speichereinstellungen verwenden Prototype-Variante B: App-Speicher und verbundene Geräteordner erscheinen als direkt auswählbare Speicherorte mit sichtbarer Auswahl und Zugriffsstatus. Jeder Wechsel erfordert „Speicherort wechseln?“ → „Wechseln“; Abbrechen, Zurück und verweigerter Ordnerzugriff lassen den bisherigen Standard unverändert. Vorhandene Figuren und Videos werden dadurch nicht verschoben. Die Rechteprüfung beim Öffnen der Einstellungen fragt nur den aktuellen Status ab und löst keine Zugriffsanfrage aus.
-
-
-Bibliotheksfiguren werden aufsteigend nummeriert (1, 2, 3 …); neue Zuordnungen erscheinen am Ende. Besitzer und Plattform-Administratoren können am Griff ziehen oder „Nach oben / Nach unten“ wählen. Der Griff unterstützt auch die Pfeiltasten. Erst „Bibliothek speichern“ übernimmt Reihenfolge und Einstellungen gemeinsam. Beim Verlassen stehen Speichern, Verwerfen und Weiter bearbeiten zur Wahl. Gleichzeitige Änderungen werden vor dem Speichern erkannt; der aktuelle Stand kann neu geladen werden. Gäste sehen nur die freigegebenen Figuren, lückenlos nummeriert.
-
-Der Sammelimport verlangt eine gespeicherte Reihenfolge. Neue lokale Figuren erscheinen unter „Neueste“ als Block in dieser Reihenfolge. Bereits vorhandene Figuren behalten Datum, Position und Lernstatus. Spätere Cloud-Umsortierungen verändern lokale Kopien nicht. Bei bereits bestehenden Bibliotheken ohne bisherige Reihenfolge dient das älteste Figuren-Erstellungsdatum als einmalige Ausgangssortierung.
+- [Android-App mit Cloud-Speicher](https://github.com/rodriges17/StepByStepCloudAndroid)
+- [Lokale PWA ohne Cloud-Speicher](https://github.com/rodriges17/StepByStepLocalPWA)
+- [Native iPhone-App](https://github.com/rodriges17/StepByStepCloudIOS)
