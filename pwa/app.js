@@ -5,7 +5,7 @@ import { connectTagSuggestions } from './tag-suggestions.js';
 import { mountTagPicker } from './tag-picker.js';
 import { cloudLocalIndex } from './cloud-local.js';
 import { createLocalCardsView, tagIcon } from './figure-card.js';
-const APP_VERSION = '2026-11-28-figure-filter-strip-v1';
+const APP_VERSION = '2026-11-28-figure-list-toolbar-v1';
 import { initBackup } from './backup-ui.js';
 import { createFileDelivery } from './file-delivery.js';
 import { createFigureZipWorkflow } from './figure-zip.js';
