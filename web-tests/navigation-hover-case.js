@@ -20,6 +20,7 @@ export async function runNavigationHoverCase(page, { root, native = false, cloud
  const trigger=cloud?page.locator('#cloudButton'):homeFigures;
  const background=await trigger.evaluate(e=>getComputedStyle(e).backgroundColor);
  const search=page.locator('#search');
+ await page.getByRole('button',{name:'Suche öffnen'}).tap();
  await page.evaluate(()=>{window.searchReturnFocuses=0;document.querySelector('#search').addEventListener('focus',()=>window.searchReturnFocuses++);});
  for(const way of cloud?['header','footer','system']:['settings']){
   await search.tap();await search.fill('Drehung');

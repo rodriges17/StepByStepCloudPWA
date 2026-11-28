@@ -228,8 +228,9 @@ export async function runParityCase(page, { root, fixture, native = false, scena
    await frame();
    const filter=await page.locator('.overview-filters').boundingBox(),nav=await page.locator('body>.bottom-nav').boundingBox();
    assert(nav.y-filter.y-filter.height>=100,'Fixed rows leave less than 100 pixels for figures');
-   assert(await page.locator('#search').isVisible(),'Search disappeared in a short window');
+   assert(await page.getByRole('button',{name:'Suche öffnen'}).isVisible(),'Search control disappeared in a short window');
   }
+  await page.getByRole('button',{name:'Suche öffnen'}).click();
   await page.locator('#search').fill('Cloud Drehung');await page.waitForFunction(()=>document.querySelectorAll('.figure-card').length===1);
  }
  if(scenario==='cloud-local-state'){

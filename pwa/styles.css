@@ -150,6 +150,12 @@ body:has(> .overview:not([hidden])){
 .page-intro{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 calc(-1 * var(--overview-gutter));padding:6px var(--overview-gutter);background:var(--surface);box-shadow:0 1px 0 var(--border)}
 .add-trigger{width:44px;height:44px;min-width:44px;border-radius:12px;display:grid;place-items:center;padding:8px;flex-shrink:0}.add-trigger svg{width:26px;height:26px}
 .overview-filters{margin:0 calc(-1 * var(--overview-gutter));padding:8px var(--overview-gutter);background:var(--surface);border-bottom:1px solid var(--border)}.overview-filters #search{width:100%;height:44px;min-height:44px;padding:8px 12px;font-size:16px;background:var(--bg)}.overview-filters #activeTag{padding-top:6px}
+.filter-row .chips{gap:4px}
+.figure-search{position:relative;margin-top:8px}
+.overview-filters .figure-search #search{padding-inline-end:44px}
+.figure-search #search::-webkit-search-cancel-button{display:none}
+.figure-search .header-icon{position:absolute;inset-block-start:0;inset-inline-end:0}
+.figure-search .header-icon:focus-visible{outline-offset:-3px}
 .add-sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:100%;max-width:560px;max-height:90dvh;overflow-y:auto;border:1px solid var(--border);border-bottom:0;border-radius:22px 22px 0 0;background:var(--card);color:var(--text);padding:10px 20px calc(24px + env(safe-area-inset-bottom))}
 .add-sheet::backdrop{background:#000a}.sheet-handle{width:36px;height:4px;border-radius:4px;background:var(--muted);opacity:.55;margin:0 auto 8px}.sheet-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.sheet-heading h2{font-size:21px;font-weight:600}
 .add-choice{width:100%;display:flex;align-items:center;gap:14px;text-align:left;padding:16px;border-radius:12px;background:var(--surface);margin-top:12px;min-height:82px}.add-choice>svg{width:28px;height:28px;flex-shrink:0;color:var(--lavender)}.add-choice>span{display:grid;gap:5px;flex:1;min-width:0}.add-choice strong{font-size:16px;font-weight:600}.add-choice span>span{font-size:13px;line-height:1.45;font-weight:400;color:var(--muted)}.add-choice>.choice-chevron{width:18px;height:18px;color:var(--text)}

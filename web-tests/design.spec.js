@@ -101,6 +101,10 @@ test('add sheet stays reachable after scrolling, works in both themes and restor
 
 test('search and filters stay fixed below the header while figures scroll',async({page},info)=>{
  await start(page);await seed(page);
+ const search=page.getByRole('searchbox',{name:'Figur suchen'});
+ await expect(search).toBeHidden();
+ await page.getByRole('button',{name:'Suche öffnen'}).tap();
+ await expect(search).toBeFocused();
  await page.locator('#figureList').evaluate(list=>{for(let i=0;i<20;i++){const row=document.createElement('article');row.className='figure-card';row.style.minHeight='100px';row.textContent='Weitere Figur '+i;list.append(row);}});
  const scroller=page.locator('#figureScroll');
  await scroller.evaluate(node=>{node.scrollTop=600;});
@@ -116,6 +120,10 @@ test('search and filters stay fixed below the header while figures scroll',async
  }
  await page.locator('#search').fill('Drehung');await expect(page.locator('.figure-card')).toHaveCount(1);
  await page.getByRole('button',{name:'Sitzt',exact:true}).tap();await expect(page.locator('.figure-card')).toHaveCount(0);await expect(page.locator('#search')).toBeInViewport();
+ await page.getByRole('button',{name:'Suche schliessen'}).tap();
+ await expect(search).toBeHidden();
+ await expect(page.locator('.figure-card')).toHaveCount(1);
+ await expect(page.locator('.figure-card')).toContainText('Grundschritt');
 });
 
 test('square compact cards keep learning state beside storage status and equal tag spacing across widths', async ({ page }, info) => {

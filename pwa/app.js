@@ -5,7 +5,7 @@ import { connectTagSuggestions } from './tag-suggestions.js';
 import { mountTagPicker } from './tag-picker.js';
 import { cloudLocalIndex } from './cloud-local.js';
 import { createLocalCardsView, tagIcon } from './figure-card.js';
-const APP_VERSION = '2026-11-28-release-verification-v1';
+const APP_VERSION = '2026-11-28-figure-search-v1';
 import { initBackup } from './backup-ui.js';
 import { createFileDelivery } from './file-delivery.js';
 import { createFigureZipWorkflow } from './figure-zip.js';
@@ -155,6 +155,18 @@ function changed() { channel?.postMessage('changed'); dispatchEvent(new Event('l
 channel?.addEventListener('message', () => { dispatchEvent(new Event('local-figures-changed')); void refresh(); });
 window.addEventListener('focus', () => refresh());
 $('search').addEventListener('input', renderOverview);
+$('openFigureSearch').onclick = () => {
+  $('figureSearch').hidden = false;
+  $('openFigureSearch').setAttribute('aria-expanded', 'true');
+  $('search').focus({ preventScroll: true });
+};
+$('closeFigureSearch').onclick = () => {
+  $('search').value = '';
+  $('figureSearch').hidden = true;
+  $('openFigureSearch').setAttribute('aria-expanded', 'false');
+  $('openFigureSearch').focus({ preventScroll: true });
+  renderOverview();
+};
 $('sort').addEventListener('change', renderOverview);
 document.addEventListener('click', event => { if (!event.target.closest('.card-menu,.card-options')) closeMenus(); });
 $('tagsButton').onclick = () => {
