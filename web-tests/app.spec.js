@@ -324,10 +324,25 @@ test('saving shows figure and video message with an activity indicator until the
  await page.evaluate(()=>window.releaseSaving());await expect(page.locator('#editor')).not.toBeVisible();await expect(page.getByRole('button',{name:'Speichertest lernen',exact:true})).toBeVisible();
 });
 
-test('standalone HTML guides open under an installed app shell and link to each other',async({page})=>{
- await start(page);
- await page.goto('/pwa/anleitungen/teilen.html');await expect(page.getByRole('heading',{name:'Bibliotheken teilen',exact:true})).toBeVisible();await expect(page.locator('img')).toHaveCount(2);
- await page.getByRole('link',{name:'Zur Benutzerverwaltung',exact:false}).click();await expect(page.getByRole('heading',{name:'Personen & Zugriff verwalten',exact:true})).toBeVisible();await page.locator('img').evaluateAll(async images=>{for(const image of images){image.loading='eager';await image.decode();}});expect(await page.locator('img').evaluateAll(images=>images.every(image=>image.naturalWidth>0&&image.src.startsWith('data:image/png;base64,')))).toBe(true);
+test('standalone guides, navigation and PDF are available under an installed app shell', async ({page}) => {
+  await start(page);
+  await page.goto('/pwa/anleitungen/');
+  await expect(page.getByRole('heading', {name: 'Anleitungen', exact: true})).toBeVisible();
+
+  const navigation = page.getByRole('navigation', {name: 'Anleitungen'});
+  await navigation.getByRole('link', {name: 'Teilen', exact: true}).click();
+  await expect(page.getByRole('heading', {name: 'Bibliotheken teilen', exact: true})).toBeVisible();
+  await navigation.getByRole('link', {name: 'Anmeldung und Zugriff', exact: true}).click();
+  await expect(page.getByRole('heading', {name: 'Anmelden, Personen und Zugriffe verwalten', exact: true})).toBeVisible();
+
+  await navigation.getByRole('link', {name: 'Installation', exact: true}).click();
+  await expect(page.getByRole('heading', {name: 'Installation & erste Schritte', exact: true})).toBeVisible();
+  const download = page.getByRole('link', {name: 'Installationsanleitung als PDF', exact: true});
+  const href = await download.getAttribute('href');
+  expect(href).toBeTruthy();
+  const pdf = await page.request.get(new URL(href, page.url()).href);
+  expect(pdf.ok()).toBe(true);
+  expect(pdf.headers()['content-type']).toContain('application/pdf');
 });
 
 test('editing app storage opens without text focus and does not summon it after video checks', async({page})=>{
