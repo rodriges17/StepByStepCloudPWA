@@ -43,12 +43,23 @@ export async function selectDirectory() {
   await permission(chosen, true);
   let handle = chosen;
   try { await chosen.getFileHandle('library.json'); }
-  catch (e) { if (e.name !== 'NotFoundError') throw e; handle = await chosen.getDirectoryHandle('SalsaTrainer', { create: true }); }
+  catch (error) {
+    if (error.name !== 'NotFoundError') throw error;
+    // Reconnecting a parent folder must keep finding its existing library.
+    try {
+      const legacy = await chosen.getDirectoryHandle('SalsaTrainer');
+      await legacy.getFileHandle('library.json');
+      handle = legacy;
+    } catch (legacyError) {
+      if (legacyError.name !== 'NotFoundError') throw legacyError;
+      handle = await chosen.getDirectoryHandle('StepByStep', { create: true });
+    }
+  }
   let library;
   try { library = await readLibrary(handle); }
   catch (e) {
     if (e.name !== 'NotFoundError') throw e;
-    for await (const _ of handle.keys()) throw new Error('Der Ordner SalsaTrainer enthält unbekannte Dateien. Bitte einen anderen Ordner auswählen.');
+    for await (const _ of handle.keys()) throw new Error('Der Bibliotheksordner enthält unbekannte Dateien. Bitte einen anderen Ordner auswählen.');
     library = { format: FORMAT, version: 1, id: crypto.randomUUID(), figures: [], garbage: [] };
     await writeLibrary(handle, library);
   }

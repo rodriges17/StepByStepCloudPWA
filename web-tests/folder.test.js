@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { validateLibrary, readLibrary, writeFolderFigure, readFolderVideo, deleteFolderFigure, cleanupFolder, permission } from '../pwa/folder-storage.js';
+import { selectDirectory, validateLibrary, readLibrary, writeFolderFigure, readFolderVideo, deleteFolderFigure, cleanupFolder, permission } from '../pwa/folder-storage.js';
 class Directory {
   files = new Map(); dirs = new Map(); failMedia = 0; failManifest = ''; deny = false; failDelete = false;
   async queryPermission() { return this.deny ? 'denied' : 'granted'; }
@@ -10,6 +10,7 @@ class Directory {
     const dir=this;
     return { async getFile(){return dir.files.get(name);}, async createWritable(){let next;return {async write(blob){if(name !== 'library.json' && --dir.failMedia === 0) throw Error('full');next=blob instanceof Blob?blob:new Blob([blob]);},async close(){if(dir.failManifest==='before')throw Error('close failed');dir.files.set(name,next);if(dir.failManifest==='after')throw Error('ambiguous close');},async abort(){}};} };
   }
+  async *keys() { yield* this.files.keys(); yield* this.dirs.keys(); }
   async removeEntry(name) { if(this.failDelete)throw Error('busy');if(!this.files.delete(name))throw new DOMException('missing','NotFoundError'); }
 }
 function setup() {
@@ -18,6 +19,27 @@ function setup() {
 }
 const figure=()=>({id:crypto.randomUUID(),title:'Salsa',description:'Beschreibung',status:'Am Üben',tags:['Drehung']});
 const draft=()=>({id:crypto.randomUUID(),name:'Führung',blob:new Blob(['video bytes'],{type:'video/mp4'}),duration:6,confirmed:true,existing:false});
+test('folder picker creates StepByStep for new libraries and reopens existing SalsaTrainer libraries', async t => {
+  const parent = new Directory();
+  globalThis.showDirectoryPicker = async () => parent;
+  globalThis.isSecureContext = true;
+  t.after(() => {
+    delete globalThis.showDirectoryPicker;
+    delete globalThis.isSecureContext;
+  });
+  const created = await selectDirectory();
+  assert.equal(created.handle, parent.dirs.get('StepByStep'));
+  assert.equal((await selectDirectory()).id, created.id);
+  assert.equal(parent.dirs.has('SalsaTrainer'), false);
+
+  const { folder: existing, mirror } = setup();
+  const saved = await writeFolderFigure(existing, figure(), [draft()], null, mirror);
+  parent.dirs.set('SalsaTrainer', existing.handle);
+  const reopened = await selectDirectory();
+  assert.equal(reopened.id, existing.id);
+  assert.equal(reopened.library.figures[0].id, saved.id);
+  assert.equal((await readLibrary(created.handle)).id, created.id);
+});
 test('folder: write, restore and verify bytes plus complete learning metadata',async()=>{
  const {folder,mirror}=setup(),f=figure(),d=draft();const saved=await writeFolderFigure(folder,f,[d],null,mirror);
  const disk=await readLibrary(folder.handle);assert.equal(disk.figures[0].status,'Am Üben');assert.deepEqual(disk.figures[0].tags,['Drehung']);assert.equal(saved.storageFolder,folder.id);
