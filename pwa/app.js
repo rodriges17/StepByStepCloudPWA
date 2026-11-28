@@ -42,13 +42,11 @@ const playerView = createPlayerView({
 });
 const playerPicker = createPlayerVideoPicker({screen:$('playerScreen'),onSelect:index=>{if(learning)loadPlayerVideo(index,!video.paused);},onOpenChange:open=>playerView.selectionChanged(open)});
 if ('ResizeObserver' in window) {
-  for (const [selector, variable] of [['.overview > .heading', '--brand-header-height'], ['.page-intro', '--overview-intro-height'], ['.overview-filters', '--overview-filters-height']]) {
-    const row = document.querySelector(selector); if (!row) continue;
-    const measure = () => document.documentElement.style.setProperty(variable, `${row.getBoundingClientRect().height}px`);
-    new ResizeObserver(measure).observe(row); measure();
-  }
+  const header = document.querySelector('.overview > .heading');
+  const measure = () => document.documentElement.style.setProperty('--brand-header-height', `${header.getBoundingClientRect().height}px`);
+  new ResizeObserver(measure).observe(header);
+  measure();
 }
-
 
 function toast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('toast').hidden = true; }, 4500); }
 function setError(id, message) { $(id).textContent = message ?? ''; $(id).hidden = !message; }
@@ -69,10 +67,9 @@ function confirmAction({ title, message = '', ok = 'Bestätigen', cancel = 'Abbr
 }
 function placeFigureMenu(menu, anchor) {
   const margin = 8;
-  const header = document.querySelector('.overview-filters')?.getBoundingClientRect();
-  const footer = document.querySelector('body > .bottom-nav')?.getBoundingClientRect();
-  const top = Math.max(margin, (header?.bottom ?? 0) + margin);
-  const bottom = Math.min(window.innerHeight, footer?.top ?? window.innerHeight) - margin;
+  const listBounds = $('figureScroll').getBoundingClientRect();
+  const top = Math.max(margin, listBounds.top + margin);
+  const bottom = Math.min(window.innerHeight, listBounds.bottom) - margin;
   menu.style.maxHeight = `${Math.max(44, bottom - top)}px`;
   const size = menu.getBoundingClientRect();
   const trigger = anchor.getBoundingClientRect();
@@ -82,7 +79,7 @@ function placeFigureMenu(menu, anchor) {
   menu.style.left = `${Math.max(margin, Math.min(trigger.right - size.width, window.innerWidth - size.width - margin))}px`;
   menu.style.right = 'auto';
 }
-window.addEventListener('scroll', () => closeMenus(), { passive: true });
+$('figureScroll').addEventListener('scroll', closeMenus, { passive: true });
 window.addEventListener('resize', () => closeMenus());
 addEventListener('cloud-session-changed', () => closeMenus());
 function closeMenus() { document.querySelectorAll('.card-menu').forEach(n => n.remove()); document.querySelectorAll('.card-options').forEach(n => n.setAttribute('aria-expanded', 'false')); }
@@ -755,7 +752,7 @@ document.querySelectorAll('[data-nav]').forEach(nav => {
     if (nav.closest('#infoDialog')) { if (deviceBusy) return; if (nav.dataset.nav === 'figures' && $('cloudDialog').open) { await closeCloud(); if ($('cloudDialog').open) return; } $('infoDialog').close(); }
     if (learning) { await new Promise(resolve => { window.addEventListener('popstate', resolve, { once: true }); history.back(); }); }
     if (nav.dataset.nav === 'cloud') openCloud();
-    else { window.scrollTo({ top: 0 }); focusFiguresNavigation(); }
+    else { $('figureScroll').scrollTop = 0; focusFiguresNavigation(); }
   };
 });
 async function chooseCloudImport({ title, fingerprint, revisionIds, figureId }) {

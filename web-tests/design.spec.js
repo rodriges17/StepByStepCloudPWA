@@ -78,7 +78,7 @@ test.describe('primary navigation and cloud layouts', () => {
 test('add sheet stays reachable after scrolling, works in both themes and restores focus when cancelled',async({page},info)=>{
  await start(page);await seed(page);
  await page.evaluate(()=>{const list=document.getElementById('figureList');for(let i=0;i<12;i++)list.append(list.firstElementChild.cloneNode(true));});
- await page.evaluate(()=>window.scrollTo(0,700));
+ await page.locator('#figureScroll').evaluate(node=>{node.scrollTop=700;});
  await expect.poll(()=>page.locator('.overview > .heading').evaluate(node=>Math.round(node.getBoundingClientRect().top))).toBe(0);
  const headerHeight=await page.locator('.overview > .heading').evaluate(node=>Math.round(node.getBoundingClientRect().height));
  await expect.poll(()=>page.locator('.page-intro').evaluate(node=>Math.round(node.getBoundingClientRect().top))).toBe(headerHeight);
@@ -102,7 +102,11 @@ test('add sheet stays reachable after scrolling, works in both themes and restor
 test('search and filters stay fixed below the header while figures scroll',async({page},info)=>{
  await start(page);await seed(page);
  await page.locator('#figureList').evaluate(list=>{for(let i=0;i<20;i++){const row=document.createElement('article');row.className='figure-card';row.style.minHeight='100px';row.textContent='Weitere Figur '+i;list.append(row);}});
- await page.evaluate(()=>window.scrollTo(0,600));
+ const scroller=page.locator('#figureScroll');
+ await scroller.evaluate(node=>{node.scrollTop=600;});
+ await expect.poll(()=>scroller.evaluate(node=>node.scrollTop)).toBeGreaterThan(0);
+ expect(await page.evaluate(()=>{const root=document.scrollingElement;return root.scrollHeight-root.clientHeight;})).toBe(0);
+ await expect(page.locator('#sort')).toBeInViewport();
  for(const theme of ['dark','light']){
   await page.evaluate(t=>window.stepAppearance.set(t),theme);
   const header=await page.locator('.overview>.heading').boundingBox(),intro=await page.locator('.page-intro').boundingBox(),filters=await page.locator('.overview-filters').boundingBox();

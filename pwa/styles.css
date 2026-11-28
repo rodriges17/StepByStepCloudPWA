@@ -121,9 +121,33 @@ details.settings-section{display:block}details.settings-section[open]>:not(summa
 .settings-heading h2:focus{outline:none}
 .storage-help summary{font-size:14px;color:var(--lavender)}.storage-help p{margin-top:12px}
 
-.overview{padding-top:0;--overview-gutter:20px;padding-inline:var(--overview-gutter)}
+body:has(> .overview:not([hidden])){
+  display:flex;
+  flex-direction:column;
+  height:var(--app-height,100dvh);
+  overflow:hidden;
+}
+.overview{
+  --overview-gutter:20px;
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  width:100%;
+  min-height:0;
+  padding:0 var(--overview-gutter);
+}
+.overview > :not(.overview-list-scroll){flex-shrink:0}
+.overview-list-scroll{
+  flex:1;
+  min-height:0;
+  margin-inline:calc(-1 * var(--overview-gutter));
+  padding:4px var(--overview-gutter) 12px;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+}
+.overview + .bottom-nav{position:static;flex-shrink:0}
 .overview>.heading{margin:0 calc(-1 * var(--overview-gutter));padding:calc(16px + env(safe-area-inset-top)) var(--overview-gutter) 12px;background:var(--surface);border-bottom:1px solid var(--border)}
-.page-intro{position:sticky;top:0;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 calc(-1 * var(--overview-gutter));padding:6px var(--overview-gutter);background:var(--surface);box-shadow:0 1px 0 var(--border)}
+.page-intro{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 calc(-1 * var(--overview-gutter));padding:6px var(--overview-gutter);background:var(--surface);box-shadow:0 1px 0 var(--border)}
 .add-trigger{width:44px;height:44px;min-width:44px;border-radius:12px;display:grid;place-items:center;padding:8px;flex-shrink:0}.add-trigger svg{width:26px;height:26px}
 .overview-filters{margin:0 calc(-1 * var(--overview-gutter));padding:8px var(--overview-gutter);background:var(--surface);border-bottom:1px solid var(--border)}.overview-filters #search{width:100%;height:44px;min-height:44px;padding:8px 12px;font-size:16px;background:var(--bg)}.overview-filters #activeTag{padding-top:6px}
 .add-sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:100%;max-width:560px;max-height:90dvh;overflow-y:auto;border:1px solid var(--border);border-bottom:0;border-radius:22px 22px 0 0;background:var(--card);color:var(--text);padding:10px 20px calc(24px + env(safe-area-inset-bottom))}
@@ -142,9 +166,6 @@ details.settings-section{display:block}details.settings-section[open]>:not(summa
 /* PWA page gestures pan content instead of magnifying the app layout. */
 html,body{touch-action:pan-x pan-y}
 
-/* Keep the brand visible on the overview and above the cloud scroll area. */
-.overview > .heading{position:sticky;top:0;z-index:6}
-.page-intro{top:var(--brand-header-height,73px)}
 .cloud-brand-header{flex-shrink:0;margin:0;padding:calc(16px + env(safe-area-inset-top)) max(20px,calc((100% - 680px)/2)) 12px;background:var(--surface);border-bottom:1px solid var(--border)}
 #cloudDialog > .screen-header{padding-top:8px}
 
@@ -152,10 +173,6 @@ html,body{touch-action:pan-x pan-y}
 .settings-screen{--settings-gutter:max(20px,calc((100vw - 680px)/2));scroll-padding-top:calc(var(--brand-header-height,73px) + 90px)}
 .settings-brand-header{position:sticky;top:0;z-index:4;flex-shrink:0;margin:0 calc(-1 * var(--settings-gutter));padding:calc(16px + env(safe-area-inset-top)) var(--settings-gutter) 12px;background:var(--surface);border-bottom:1px solid var(--border)}
 .settings-heading{top:var(--brand-header-height,73px);z-index:3;padding-top:14px}
-
-/* Keep search, learning status and tag filters beneath the measured header rows. */
-.overview-filters{position:sticky;top:calc(var(--brand-header-height,73px) + var(--overview-intro-height,90px));z-index:3}
-html{scroll-padding-top:calc(var(--brand-header-height,73px) + var(--overview-intro-height,90px) + var(--overview-filters-height,150px) + 12px)}
 
 /* Shared menus remain reachable above navigation and below fixed filters. */
 .card-menu{position:fixed;z-index:7;max-width:calc(100vw - 16px);overflow-y:auto;overscroll-behavior:contain}

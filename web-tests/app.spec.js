@@ -310,7 +310,8 @@ test('mobile page gestures keep app scale fixed while one-finger scrolling remai
  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:180,y:500}]});
  for(let y=480;y>=180;y-=20)await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:180,y}]});
  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
- await expect.poll(()=>page.evaluate(()=>window.scrollY)).toBeGreaterThan(100);
+ await expect.poll(()=>page.locator('#figureScroll').evaluate(node=>node.scrollTop)).toBeGreaterThan(100);
+ expect(await page.evaluate(()=>window.scrollY)).toBe(0);
  await session.send('Input.synthesizePinchGesture',{x:180,y:450,scaleFactor:2,gestureSourceType:'touch',relativeSpeed:800});
  await expect.poll(()=>page.evaluate(()=>window.visualViewport.scale)).toBe(1);
 });
