@@ -21,7 +21,7 @@ test('first frame remains paused and loading errors can be retried',async({page}
  await expect(page.getByRole('button',{name:'Video starten',exact:true})).toBeVisible();
  await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',true);
 });
-test('denied browser fullscreen keeps custom controls, tap playback and Back navigation',async({page})=>{
+test('denied browser fullscreen keeps custom controls and Back navigation',async({page})=>{
  await openPlayer(page,2);
  await page.evaluate(()=>{document.querySelector('#playerScreen').requestFullscreen=()=>Promise.reject(Error('denied'));document.querySelector('#learningVideo').webkitEnterFullscreen=()=>{throw Error('native video fallback must not be used');};});
  await page.locator('#speed').selectOption('0.5');await page.locator('#learningVideo').evaluate(v=>v.currentTime=.3);
@@ -46,8 +46,12 @@ test('container fullscreen preserves state and hides controls on inactivity but 
  await page.locator('#playPause').click();await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',false);
  const seek=await page.locator('#seek').boundingBox();await page.mouse.move(seek.x+seek.width*.3,seek.y+seek.height/2);await page.mouse.down();
  await page.clock.fastForward(5000);await expect(page.locator('#playerScreen .screen-header')).toHaveJSProperty('inert',false);
- await page.mouse.up();await page.clock.fastForward(4100);await expect(page.locator('#playerScreen .screen-header')).toHaveJSProperty('inert',true);
- await page.mouse.click(180,300);await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',true);
+ await page.mouse.up();await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',false);await page.clock.fastForward(4100);await expect(page.locator('#playerScreen .screen-header')).toHaveJSProperty('inert',true);
+ await page.mouse.click(185,300);await page.clock.fastForward(350);
+ await expect(page.locator('#videoStage .timeline')).toBeVisible();
+ await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',false);
+ await page.getByRole('button',{name:'Video pausieren',exact:true}).click();
+ await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',true);
  await page.keyboard.press('ArrowUp');await page.clock.fastForward(6000);await expect(page.locator('#playerScreen .screen-header')).toHaveJSProperty('inert',false);
  await page.locator('#seek').focus();await page.keyboard.press('ArrowDown');await expect(page.locator('#playerScreen .screen-header')).toHaveJSProperty('inert',false);
  await page.locator('#videoStage').focus();await page.keyboard.press('ArrowDown');await expect(page.locator('#playerScreen .screen-header')).toHaveJSProperty('inert',true);
@@ -75,11 +79,12 @@ test('double taps seek within A–B and accumulate feedback while paused play ca
  await page.mouse.dblclick(b.x+b.width*.85,y,{delay:80});
  await expect(page.locator('#learningVideo')).toHaveJSProperty('currentTime',3);
  await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',true);
- await page.mouse.dblclick(b.x+b.width*.85,y,{delay:80});await expect(page.locator('.player-seek-feedback')).toHaveText('▶▶ 10 s');
+ await page.mouse.dblclick(b.x+b.width*.85,y,{delay:80});await expect(page.locator('.player-seek-feedback')).toHaveText('▶▶ 20 s');
  await page.mouse.dblclick(b.x+b.width*.15,y,{delay:80});await expect(page.locator('#learningVideo')).toHaveJSProperty('currentTime',1);
  await expect(page.locator('#learningVideo')).toHaveJSProperty('seeking',false);
+ await page.clock.fastForward(350);
+ await page.mouse.click(b.x+b.width*.15,y);await page.clock.fastForward(350);await expect(page.locator('#videoStage .timeline')).toBeVisible();
  await page.mouse.click(b.x+b.width*.15,y);await page.clock.fastForward(350);await expect(page.getByRole('button',{name:'Video starten',exact:true})).toBeHidden();
- await page.mouse.click(b.x+b.width*.15,y);await page.clock.fastForward(350);await expect(page.getByRole('button',{name:'Video starten',exact:true})).toBeVisible();
 });
 
 test('fullscreen menu keeps browser safe area clear through rotation without moving video',async({page,browserName})=>{
@@ -166,4 +171,61 @@ test('video selection remains operable while fullscreen controls would normally 
  await expect(page.locator('#playerScreen .player-bottom')).toHaveJSProperty('inert',true);
  await page.keyboard.press('ArrowUp');
  await expect(page.locator('#playerVideoChoice')).toBeVisible();
+});
+
+
+test('the standalone timeline scrubs and stays visible while dragging a running video', async ({page,browserName}) => {
+ await openPlayer(page);
+ await page.clock.install();
+ await page.locator('#speed').selectOption('0.25');
+ await page.locator('#playPause').click();
+ const stage=page.locator('#videoStage');
+ const tapImage=async()=>{
+  const box=await stage.boundingBox();
+  await page.touchscreen.tap(box.x+box.width*.5, box.y+box.height*.25);
+  await page.clock.fastForward(350);
+ };
+ await tapImage();
+ await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',false);
+ await expect(page.locator('.player-bottom')).toBeHidden();
+ const slider=stage.getByRole('slider',{name:'Videoposition'});
+ const seek=await slider.boundingBox();
+ const y=seek.y+seek.height/2;
+ const start=seek.x+seek.width*.25, target=seek.x+seek.width*.65;
+ const touch=browserName==='chromium' ? await page.context().newCDPSession(page) : null;
+ if (touch) {
+  await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:start,y}]});
+  await touch.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:target,y}]});
+ } else {
+  await page.mouse.move(start,y);
+  await page.mouse.down();
+  await page.mouse.move(target,y,{steps:5});
+ }
+ await page.clock.fastForward(3200);
+ await expect(slider).toBeVisible();
+ await expect(page.locator('#position')).toHaveText('0:03');
+ await expect.poll(()=>page.locator('#learningVideo').evaluate(v=>v.currentTime)).toBeCloseTo(3.9,0);
+ if (touch) await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ else await page.mouse.up();
+ await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',false);
+ await page.clock.fastForward(3100);
+ await expect(slider).toBeHidden();
+ await tapImage();
+ await expect(slider).toBeVisible();
+ await tapImage();
+ await expect(slider).toBeHidden();
+ await expect(page.locator('#learningVideo')).toHaveJSProperty('paused',false);
+});
+
+test('a manually rotated player follows the timeline and seek gestures along the video', async ({page}) => {
+ await openPlayer(page);
+ await page.clock.install();
+ await page.locator('#rotatePlayer').click();
+ const slider=page.getByRole('slider',{name:'Videoposition'});
+ const track=await slider.boundingBox();
+ await page.mouse.click(track.x+track.width/2,track.y+track.height*.35);
+ await expect(page.locator('#position')).toHaveText('0:02');
+ const stage=await page.locator('#videoStage').boundingBox();
+ await page.mouse.dblclick(stage.x+stage.width*.35,stage.y+stage.height*.75,{delay:80});
+ await expect(page.locator('.player-seek-feedback')).toHaveText('▶▶ 10 s');
 });
