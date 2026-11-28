@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  deployments: read
 concurrency:
   group: pwa-${{ github.ref }}
   cancel-in-progress: true
@@ -17,10 +18,43 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
+      - name: Check app shell against the published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          deployments=$(gh api --paginate "repos/$GITHUB_REPOSITORY/deployments?environment=github-pages&per_page=20" --jq '.[] | [.sha, .id] | @tsv')
+          previous=""
+          while IFS=$'\t' read -r sha id; do
+            [[ -n "$id" ]] || continue
+            state=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$id/statuses?per_page=1" --jq '.[0].state')
+            if [[ "$state" == success ]]; then
+              previous="$sha"
+              break
+            fi
+          done <<< "$deployments"
+          test -n "$previous"
+          if ! git cat-file -e "$previous^{commit}"; then
+            git fetch origin "$previous"
+          fi
+          bases=("$previous")
+          if [[ -n "$PR_BASE" ]]; then bases+=("$PR_BASE"); fi
+          node web-tests/check-app-shell.mjs "${bases[@]}"
+          mkdir "$RUNNER_TEMP/previous-pwa"
+          git archive "$previous" pwa | tar -x -C "$RUNNER_TEMP/previous-pwa" --strip-components=1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: previous-pwa
+          path: ${{ runner.temp }}/previous-pwa
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm test
       - uses: denoland/setup-deno@v2
@@ -35,10 +69,15 @@ jobs:
           path: web-tests/fixtures/*.mp4
           if-no-files-found: error
           retention-days: 1
+      - name: Stamp Pages artifact with the source commit
+        if: github.event_name != 'pull_request'
+        run: |
+          cp -a pwa "$RUNNER_TEMP/pages"
+          printf '{"commit":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/pages/build.json"
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:
-          path: pwa
+          path: ${{ runner.temp }}/pages
 
   browser:
     needs: checks
@@ -70,7 +109,13 @@ jobs:
         with:
           name: pwa-test-videos
           path: web-tests/fixtures
+      - uses: actions/download-artifact@v4
+        with:
+          name: previous-pwa
+          path: ${{ runner.temp }}/previous-pwa
       - run: npm run test:browser -- --project=${{ matrix.project }} --shard=${{ matrix.shard }}/2
+        env:
+          PWA_PREVIOUS_SHELL: ${{ runner.temp }}/previous-pwa
       - name: Upload browser results
         if: always()
         uses: actions/upload-artifact@v4

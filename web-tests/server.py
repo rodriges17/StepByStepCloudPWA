@@ -2,7 +2,9 @@
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlsplit
-import json, re
+import json, os, re
+
+previous_shell = os.environ.get("PWA_PREVIOUS_SHELL")
 
 versions = {}
 class Handler(SimpleHTTPRequestHandler):
@@ -48,10 +50,14 @@ class Handler(SimpleHTTPRequestHandler):
             return super().do_GET()
         scenario, name = match.groups()
         name = name or 'index.html'
-        if name not in {'index.html', 'app.js', 'player-view.js', 'player-video-picker.js', 'figure-edit-session.js', 'tag-picker.js', 'tag-catalog.js', 'tag-suggestions.js', 'file-delivery.js', 'figure-zip.js', 'cloud.js', 'figure-card.js', 'cloud-card-view.js', 'cloud-navigation.js', 'cloud-upload.js', 'cloud-dedup.js', 'cloud-people.js', 'cloud-people-grant.js', 'cloud-members.js', 'cloud-local.js', 'cloud-provenance.js', 'cloud-local-content.js', 'cloud-library-download.js', 'cloud-library-order.js', 'cloud-library-draft.js', 'cloud-read-state.js', 'cloud-cache.js', 'cloud-posters.js', 'cloud-api.js', 'cloud-config.js', 'styles.css', 'appearance.js', 'zoom.js', 'fonts/Inter-400.woff', 'fonts/Inter-500.woff', 'fonts/Inter-600.woff', 'fonts/Inter-700.woff', 'sw.js', 'storage.js', 'app-storage.js', 'folder-storage.js', 'logic.js', 'package.js', 'backup-format.js', 'backup-ui.js', 'backup-workflow.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'}:
-            return self.send_error(404)
-        body = (Path('pwa') / name).read_bytes()
         legacy = versions.get(scenario) != 'current'
+        released = scenario.startswith('released-')
+        root = Path(previous_shell if released and legacy and previous_shell else 'pwa').resolve()
+        file = (root / name).resolve()
+        if not file.is_relative_to(root) or not file.is_file():
+            return self.send_error(404)
+        body = file.read_bytes()
+        legacy = legacy and not released
         if legacy and name == 'sw.js':
             body = re.sub(rb"const VERSION = '[^']+';", b"const VERSION = 'qa-legacy-shell';", body, count=1).replace(b"assets.map(url => new Request(url, { cache: 'reload' }))", b'assets')
         if legacy and name == 'app.js':

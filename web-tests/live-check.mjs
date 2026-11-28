@@ -6,6 +6,11 @@ const url = `https://${owner}.github.io/${repository}/`;
 const source = await readFile(new URL('../pwa/app.js', import.meta.url), 'utf8');
 const expectedVersion = source.match(/const APP_VERSION = '([^']+)'/)?.[1];
 assert.ok(expectedVersion, 'The source app must declare its deployment version.');
+const expectedCommit = process.env.GITHUB_SHA;
+assert.match(expectedCommit ?? '', /^[0-9a-f]{40}$/, 'Set GITHUB_SHA to the expected deployed commit.');
+const marker = await fetch(new URL(`build.json?commit=${expectedCommit}`, url), { signal: AbortSignal.timeout(15000) });
+assert.ok(marker.ok, `Published build marker returned HTTP ${marker.status}`);
+assert.equal((await marker.json()).commit, expectedCommit, 'GitHub Pages is serving a different commit.');
 await mkdir('test-results/live', { recursive: true });
 for (const [name, engine, options] of [
   ['chrome', chromium, { ...devices['Pixel 7'] }],

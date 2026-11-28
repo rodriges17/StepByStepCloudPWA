@@ -248,38 +248,50 @@ test('touch import works after cancel, keyboard editing and returning from the p
   await expect(page.locator('.figure-card')).toHaveCount(2);
 });
 
-test('installed shell update bypasses stale HTTP CSS and preserves offline videos', async ({ page, context }, info) => {
-  const id = `${info.project.name}-${Date.now()}`, scope = `/upgrade/${id}/`;
-  await page.goto(scope);
-  await expect(page.locator('html')).toHaveAttribute('data-offline-status','ready', { timeout: 30000 });
-  await page.evaluate(async () => { await navigator.serviceWorker.ready; if (!navigator.serviceWorker.controller) await new Promise(resolve => navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true })); });
-  await expect(page.locator('html')).toHaveAttribute('data-app-version', 'qa-legacy-shell');
-  await expect(page.locator('#importFigure')).toHaveCSS('pointer-events', 'none');
-  await addFigure(page);
-  await page.request.post(`/__qa/upgrade/${id}`);
-  await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update(); });
-  await expect(page.locator('#updateNotice')).toBeVisible();
-  // An update must not throw away a draft. It is applied from the overview.
-  await page.locator('#openAddFigure').tap(); await page.locator('#addFigure').tap(); await page.locator('#figureTitle').fill('Keep my draft');
-  await page.evaluate(() => document.getElementById('applyUpdate').click());
-  await expect(page.locator('#figureTitle')).toHaveValue('Keep my draft');
-  await page.locator('#editorBack').tap(); await page.locator('#confirmOK').tap();
-  await expect(page.locator('#editor')).not.toBeVisible();
-  await page.locator('#applyUpdate').tap();
-  await expect(page.locator('html')).toHaveAttribute('data-app-version', currentVersion);
-  await expect(page.locator('#importFigure')).toHaveCSS('pointer-events', 'auto');
-  await expect(page.locator('.figure-card')).toHaveCount(1);
-  const file = await exportPackage(page, info);
-  await context.setOffline(true); await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('data-app-version', currentVersion);
-  await page.getByRole('button', { name: 'Ocho lernen' }).tap();
-  await expect(page.locator('#learningVideo')).toHaveJSProperty('videoWidth', 320);
-  await page.locator('#playPause').tap();
-  await expect.poll(() => page.locator('#learningVideo').evaluate(v => v.currentTime)).toBeGreaterThan(0.1);
-  await page.locator('#playerBack').tap();
-  await choosePackage(page, file); await confirmImported(page, 2);
-  await expect(page.locator('.figure-card')).toHaveCount(2);
-});
+const previousShell = process.env.PWA_PREVIOUS_SHELL;
+const previousVersion = previousShell
+  ? readFileSync(path.join(previousShell, 'app.js'), 'utf8').match(/const APP_VERSION = '([^']+)'/)[1]
+  : null;
+
+for (const [name, version, released] of [
+  ['bypasses stale HTTP CSS', 'qa-legacy-shell', false],
+  ['upgrades the previously published app shell', previousVersion, true]
+]) {
+  test(`installed shell update ${name} and preserves offline videos`, async ({ page, context }, info) => {
+    test.skip(released && (!version || version === currentVersion), 'No published app shell version change to test.');
+    const id = `${released ? 'released-' : ''}${info.project.name}-${Date.now()}`, scope = `/upgrade/${id}/`;
+    await page.goto(scope);
+    await expect(page.locator('html')).toHaveAttribute('data-offline-status','ready', { timeout: 30000 });
+    await page.evaluate(async () => { await navigator.serviceWorker.ready; if (!navigator.serviceWorker.controller) await new Promise(resolve => navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true })); });
+    await expect(page.locator('html')).toHaveAttribute('data-app-version', version);
+    if (!released) await expect(page.locator('#importFigure')).toHaveCSS('pointer-events', 'none');
+    await addFigure(page);
+    await page.request.post(`/__qa/upgrade/${id}`);
+    await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update(); });
+    await expect(page.locator('#updateNotice')).toBeVisible();
+    // An update must not throw away a draft. It is applied from the overview.
+    await page.locator('#openAddFigure').tap(); await page.locator('#addFigure').tap(); await page.locator('#figureTitle').fill('Keep my draft');
+    await page.evaluate(() => document.getElementById('applyUpdate').click());
+    await expect(page.locator('#figureTitle')).toHaveValue('Keep my draft');
+    await page.locator('#editorBack').tap(); await page.locator('#confirmOK').tap();
+    await expect(page.locator('#editor')).not.toBeVisible();
+    await page.locator('#applyUpdate').tap();
+    await expect(page.locator('html')).toHaveAttribute('data-app-version', currentVersion);
+    await expect(page.locator('#importFigure')).toHaveCSS('pointer-events', 'auto');
+    await expect(page.locator('#figureScroll')).toHaveCSS('overflow-y', 'auto');
+    await expect(page.locator('.figure-card')).toHaveCount(1);
+    const file = await exportPackage(page, info);
+    await context.setOffline(true); await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('data-app-version', currentVersion);
+    await page.getByRole('button', { name: 'Ocho lernen' }).tap();
+    await expect(page.locator('#learningVideo')).toHaveJSProperty('videoWidth', 320);
+    await page.locator('#playPause').tap();
+    await expect.poll(() => page.locator('#learningVideo').evaluate(v => v.currentTime)).toBeGreaterThan(0.1);
+    await page.locator('#playerBack').tap();
+    await choosePackage(page, file); await confirmImported(page, 2);
+    await expect(page.locator('.figure-card')).toHaveCount(2);
+  });
+}
 
 
 test('installation and storage opens at the beginning on first open and reopen', async ({ page }) => {
