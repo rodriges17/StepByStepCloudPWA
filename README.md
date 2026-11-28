@@ -6,7 +6,7 @@
 
 ## App nutzen
 
-- **Installieren.** Auf Android in Chrome über **App installieren**, auf dem iPhone in Safari über **Zum Home-Bildschirm**. Auf dem Computer kannst du die App direkt im Browser öffnen.
+- **Installieren.** Die Web-App lässt sich auf Android, iPhone und am Computer installieren. [Installation und erste Schritte](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/installation.html)
 - **Figuren verwalten.** Pro Figur kannst du mehrere Videos, eine Beschreibung, Tags und deinen Lernstand speichern. Suche und Filter helfen dir, Figuren wiederzufinden. [Figuren anlegen und üben](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/ueben.html)
 - **Offline üben.** In **Cloud-Speicher → Bibliotheken** kannst du einzelne Figuren oder eine ganze Bibliothek lokal verfügbar machen. Nach dem Download findest du die Figuren unter **Figuren**. Der Lernplayer bietet Videowahl, Wiedergabetempo von 0,25× bis 1×, Zeitleiste, 5-Sekunden-Sprünge, Fit/Crop und eine A–B-Schleife.
 - **Lokal speichern und sichern.** Figuren liegen im App-Speicher oder in einem Geräteordner, sofern der Browser Ordnerzugriff unterstützt. Ein Figuren-ZIP dient zum Teilen einzelner Figuren. Ein vollständiges Backup sichert auch persönliche Lernstände. [Speicher und Backup](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/speicher.html)
