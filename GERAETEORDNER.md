@@ -1,6 +1,6 @@
-# Geräteordner in Salsa Trainer Cloud
+# Geräteordner in Step by Step
 
-Unter Installation & Speicher → Speicherort kann ein Geräteordner für neue Figuren gewählt werden. Der vorhandene App-Speicher bleibt nutzbar. Die separate Offline-App wird nicht geändert.
+Wähle unter **Einstellungen → Speicherort** einen Geräteordner für neue Figuren. Der App-Speicher bleibt verfügbar. Diese technischen Details betreffen die Web-Apps. Für die Android-App siehe [Geräteordner unter Android](https://github.com/rodriges17/StepByStepCloudAndroid/blob/main/docs/NATIVE-ORDNERSCHREIBEN.md). [Schritt-für-Schritt-Anleitung](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/speicher.html)
 
 ## Unterstützung und Berechtigungen
 
@@ -21,19 +21,6 @@ Fehlende oder extern veränderte Videos werden gekennzeichnet. Beim Bearbeiten b
 ## Grenzen
 
 Die Bibliotheksdatei ist auf 8 MiB begrenzt. Vorhandene unbekannte Formate, Pfadtraversierung und widersprüchliche Dateiverweise werden abgewiesen. Mehrere Tabs derselben App verwenden die Web Locks API, sofern verfügbar. Derselbe Ordner sollte nicht gleichzeitig aus unterschiedlichen Browsern oder synchronisierten Gerätekopien bearbeitet werden. Ein Browser kann eine erneute Bestätigung des Ordnerzugriffs verlangen. Geräteordner liegen außerhalb der geschätzten Browser-Speicherquote; die Anzeige App-Speicher umfasst sie nicht.
-
-## Prüfung
-
-Sieben zusätzliche Node-Tests prüfen unveränderte Bytes und Lernstände, Schreibfehler, veraltete Revisionen, unklaren Schreibabschluss, Berechtigungen, beschädigte Dateien, Löschwiederholung und ungültige Dateipfade. Browserprüfungen verwenden native Chromium-OPFS-Handles mit simuliertem Ordnerpicker und Berechtigungen; sie prüfen direkte Offline-Wiedergabe, Wiederherstellung nach Verlust des Registers, erneutes Verbinden, Reparatur und Übertragung in beide Richtungen. Die nicht unterstützte Einstellung wird auch in WebKit geprüft. Diese Prüfungen ersetzen keinen physischen Android-Test des Betriebssystemdialogs und dessen langfristiger Berechtigungsdauer.
-
-## Ergebnis am 20.10.2026
-
-Version 2026-10-20-folder-v1 ist veröffentlicht. 28 Node-Prüfungen und 42 Browserprüfungen erfolgreich; vier native Ordnerfälle in WebKit bewusst ausgelassen. Die fehlende Ordneroption wird dort stattdessen geprüft. Der erste Lauf hatte zwei mehrdeutige Fokus-Selektoren in bestehenden Cloud-Tests; diese wurden auf den Cloud-Dialog eingegrenzt. Die neuen Ordnerfälle bestanden bereits in dieser Runde.
-
-Entwicklungsprüfung: https://github.com/rodriges17/SalsaAppCloud/actions/runs/39353906543
-Veröffentlichung und erfolgreiche Live-Importprüfungen: https://github.com/rodriges17/SalsaAppCloud/actions/runs/39354451557
-
-app.js, index.html, folder-storage.js und app-storage.js live mit HTTP 200 und neuen Versions-/Funktionskennungen geprüft. Die Offline-App SalsaAppIOS bleibt auf 84d21e7405bd3656206a3ccb5c27f7bb2e5836d9. Der physische Android-Ordnerdialog und langfristige OS-Berechtigungen sind hier nicht getestet; die Dateihandles wurden im Browser über OPFS bei simuliertem Picker und Berechtigung geprüft.
 
 ## Gemeinsame Zugriffslogik
 

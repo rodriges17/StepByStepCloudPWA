@@ -1,6 +1,6 @@
 # Vollständiges lokales Backup
 
-Nur Salsa Trainer Cloud. Installation & Speicher → Vollständiges Backup erstellen beziehungsweise Backup wiederherstellen. Der bisherige Figur-ZIP-Austausch bleibt unverändert und enthält weiterhin keine Lernstände.
+Das vollständige Backup steht in der Cloud-Web-App, der lokalen Web-App und der nativen Android-App zur Verfügung. Öffne **Einstellungen → Vollständiges Backup erstellen** oder **Backup wiederherstellen**. Der Figuren-ZIP-Austausch enthält keine Lernstände. [Schritt-für-Schritt-Anleitung](https://rodriges17.github.io/StepByStepCloudPWA/anleitungen/speicher.html)
 
 ## Inhalt
 
@@ -23,20 +23,6 @@ Alle Teile auswählen. Vor jeder Änderung werden sämtliche Dateien und Figuren
 Konflikte beziehen sich auf den gewählten Zielspeicher. Figuren an anderen Speicherorten bleiben unverändert. Identische Figuren werden standardmäßig übersprungen. Abweichende Figuren, auch bei unterschiedlichem Lernstand oder Datum, sind Konflikte. Standard ist Vorhandene behalten; weitere Optionen sind Zusätzliche Kopie und ausdrücklich Ersetzen einer konkreten Figur. Interne Austausch-Fingerprints werden nicht als alleinige Duplikatkennung verwendet; unabhängige lokale Kopien bleiben in der Sicherung getrennt enthalten.
 
 Alle neuen Videos werden zunächst geschrieben und erneut geprüft. App-Speicher: ein gemeinsamer IndexedDB-Abschluss übernimmt alle Figuren; Fehler oder Abbruch davor entfernen die neu gestagten Cachedateien. Geräteordner: erst nach sämtlichen Kopien wird die Bibliotheksdatei einmal ersetzt; nicht mehr benötigte Dateien werden danach bereinigt. Veraltete Wiederherstellungspläne werden abgewiesen. Bei einem unklaren Dateischreibabschluss werden möglicherweise noch referenzierte Dateien nicht gelöscht. Die vorhandenen ursprünglichen Importdateien außerhalb der App werden nie angefasst.
-
-## Tests
-
-Node-Tests: vollständiger Rundlauf, aufgeteiltes Einzelvideo, ungeordnete Teilwahl, fehlende/doppelte/gemischte Teile, Beschädigung, Abbruch, ungültige Metadaten, Dateigrenzen und Ordner-Batch-Rollback. Browserprüfungen: Download, vollständige UI-Wiederherstellung, unveränderte Lernstände/Erstellungsdaten, Konflikte und wiederholte Wiederherstellung, Cache-Schreibfehler, Abbruch und Geräteordner-Ziel. Native Ordnerhandlungen werden mit Chromium-OPFS und simuliertem Picker geprüft. Physische Android-/iOS-Dateidialoge und die Aufbewahrung von Browser-Downloads sind hier nicht testbar.
-
-
-## Verifiziert am 20.10.2026
-
-Version 2026-10-20-backup-v1 ist veroeffentlicht. 39 Node-Pruefungen und 51 Browserpruefungen erfolgreich, insgesamt 90; fuenf native Ordnerfaelle in WebKit bewusst ausgelassen. Der erste Browserlauf hing am QA-Serverstart. Entwicklungspruefung und Veroeffentlichung bestanden danach vollstaendig.
-
-Entwicklungspruefung: https://github.com/rodriges17/SalsaAppCloud/actions/runs/39360251639
-Veroeffentlichung und erfolgreicher Live-Importtest: https://github.com/rodriges17/SalsaAppCloud/actions/runs/39360867296
-
-index.html, app.js, backup-format.js und backup-ui.js wurden live mit HTTP 200 und den erwarteten Kennungen geprueft. Die separate Offline-App bleibt auf 84d21e7405bd3656206a3ccb5c27f7bb2e5836d9. Physische mobile Dateidialoge und das tatsaechliche Aufbewahren der Browser-Downloads sind hier nicht geprueft.
 
 ## Ablauf und Darstellung
 
